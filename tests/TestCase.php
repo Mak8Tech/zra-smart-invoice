@@ -21,32 +21,37 @@ class TestCase extends Orchestra
     }
 
     /**
+     * Define database migrations.
+     *
+     * @return void
+     */
+    protected function defineDatabaseMigrations()
+    {
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+    }
+
+    /**
      * Define environment setup.
      *
      * @param  \Illuminate\Foundation\Application  $app
+     * @return void
      */
     protected function defineEnvironment($app)
     {
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testing');
         $app['config']->set('database.connections.testing', [
-            'driver' => 'sqlite',
+            'driver'   => 'sqlite',
             'database' => ':memory:',
-            'prefix' => '',
+            'prefix'   => '',
         ]);
 
-        // Set test environment for ZRA
-        $app['config']->set('zra.base_url', 'https://api-sandbox.zra.org.zm/vsdc-api/v1');
-        $app['config']->set('zra.retry.attempts', 1);
-        $app['config']->set('zra.retry.delay', 1);
-        $app['config']->set('zra.debug', true);
-    }
-
-    /**
-     * Define database migrations.
-     */
-    protected function defineDatabaseMigrations()
-    {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        // Set ZRA config
+        $app['config']->set('zra.environment', 'sandbox');
+        $app['config']->set('zra.endpoints.sandbox', [
+            'base_url' => 'https://sandbox-api.example.com',
+            'initialize' => '/api/v1/initialize',
+            'sales' => '/api/v1/sales',
+        ]);
     }
 }
