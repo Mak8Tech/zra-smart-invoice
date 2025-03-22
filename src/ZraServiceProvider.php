@@ -14,15 +14,15 @@ class ZraServiceProvider extends ServiceProvider
     {
         // Load package routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        
+
         // Load migrations
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        
+
         // Publish configuration
         $this->publishes([
             __DIR__ . '/../config/zra.php' => config_path('zra.php'),
         ], 'config');
-        
+
         // Publish Inertia components
         $this->publishes([
             __DIR__ . '/../resources/js' => resource_path('js/vendor/mak8tech/zra-smart-invoice'),
@@ -36,9 +36,10 @@ class ZraServiceProvider extends ServiceProvider
     {
         // Merge configuration
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/zra.php', 'zra'
+            __DIR__ . '/../config/zra.php',
+            'zra'
         );
-        
+
         // Register the service
         $this->app->singleton('zra', function ($app) {
             return new ZraService();

@@ -1,0 +1,204 @@
+<?php
+
+namespace Mak8Tech\ZraSmartInvoice\Http\Controllers;
+
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response;
+use Mak8Tech\ZraSmartInvoice\Http\Requests\ZraConfigRequest;
+use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
+use Mak8Tech\ZraSmartInvoice\Services\ZraService;
+
+class ZraController extends Controller
+{
+    /**
+     * @var ZraService
+     */
+    protected $zraService;
+
+    /**
+     * Constructor
+     */
+    public function __construct(ZraService $zraService)
+    {
+        $this->zraService = $zraService;
+    }
+
+    /**
+     * Display the ZRA configuration page
+     *
+     * @return Response
+     */
+    public function index(): Response
+    {
+        $config = ZraConfig::getActive();
+
+        return Inertia::render('ZraConfig/Index', [
+            'config' => $config ? [
+                'id' => $config->id,
+                'tpin' => $config->tpin,
+                'branch_id' => $config->branch_id,
+                'device_serial' => $config->device_serial,
+                'environment' => $config->environment,
+                'status' => $config->getStatus(),
+                'last_initialized_at' => $config->last_initialized_at?->format('Y-m-d H:i:s'),
+                'last_sync_at' => $config->last_sync_at?->format('Y-m-d H:i:s'),
+            ] : null,
+            'logs' => $this->zraService->getRecentLogs()->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'transaction_type' => $log->transaction_type,
+                    'reference' => $log->reference,
+                    'status' => $log->status,
+                    'error_message' => $log->error_message,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                ];
+            }),
+            'is_initialized' => $this->zraService->isInitialized(),
+            'environment' => config('zra.base_url') === 'https://api-sandbox.zra.org.zm/vsdc-api/v1' ? 'sandbox' : 'production',
+        ]);
+    }
+
+    /**
+     * Initialize the ZRA device
+     *
+     * @param ZraConfigRequest $request
+     * @return array
+     */
+    public function initialize(ZraConfigRequest $request): array
+    {
+        try {
+            $result = $this->zraService->initializeDevice(
+                $request->input('tpin'),
+                $request->input('branch_id'),
+                $request->input('device_serial')
+            );
+
+            if ($result['success']) {
+                return [
+                    'success' => true,
+                    'message' => 'Device successfully initialized',
+                    'result' => $result['data'],
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => $result['error'] ?? 'Initialization failed',
+            ];
+        } catch (Exception $e) {
+            Log::error('ZRA device initialization failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get the current ZRA configuration status
+     *
+     * @return array
+     */
+    public function status(): array
+    {
+        $config = ZraConfig::getActive();
+
+        return [
+            'initialized' => $this->zraService->isInitialized(),
+            'config' => $config ? [
+                'status' => $config->getStatus(),
+                'environment' => $config->environment,
+                'last_initialized_at' => $config->last_initialized_at?->format('Y-m-d H:i:s'),
+                'last_sync_at' => $config->last_sync_at?->format('Y-m-d H:i:s'),
+            ] : null,
+        ];
+    }
+
+    /**
+     * Get recent transaction logs
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function logs(Request $request): array
+    {
+        $limit = $request->input('limit', 10);
+
+        return [
+            'logs' => $this->zraService->getRecentLogs($limit)->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'transaction_type' => $log->transaction_type,
+                    'reference' => $log->reference,
+                    'status' => $log->status,
+                    'error_message' => $log->error_message,
+                    'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+                ];
+            }),
+        ];
+    }
+
+    /**
+     * Test a sales data submission
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function testSales(Request $request): array
+    {
+        try {
+            // Ensure device is initialized
+            if (!$this->zraService->isInitialized()) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not initialized. Please initialize the device first.',
+                ];
+            }
+
+            // Sample sales data
+            $salesData = [
+                'invoiceNumber' => 'INV-' . mt_rand(1000, 9999),
+                'timestamp' => now()->format('Y-m-d H:i:s'),
+                'items' => [
+                    [
+                        'name' => 'Test Product',
+                        'quantity' => 2,
+                        'unitPrice' => 100.00,
+                        'totalAmount' => 200.00,
+                        'taxRate' => 16,
+                        'taxAmount' => 32.00,
+                    ],
+                ],
+                'totalAmount' => 200.00,
+                'totalTax' => 32.00,
+                'paymentType' => 'CASH',
+                'customerTpin' => '',  // Optional for customer without TPIN
+            ];
+
+            $result = $this->zraService->sendSalesData($salesData);
+
+            return [
+                'success' => $result['success'],
+                'message' => $result['success'] ? 'Test sales data sent successfully' : ($result['error'] ?? 'Failed to send test sales data'),
+                'reference' => $result['reference'] ?? null,
+                'data' => $result['data'] ?? null,
+            ];
+        } catch (Exception $e) {
+            Log::error('ZRA test sales submission failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+}
