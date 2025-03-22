@@ -71,7 +71,7 @@ export default function Index({
                 isInitialized={is_initialized}
                 environment={environment}
                 status={config?.status}
-                lastSync={config?.last_sync_at}
+                lastSync={config?.last_sync_at ?? null}
               />
 
               <div className="mt-6 border-b border-gray-200 mb-6">

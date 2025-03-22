@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { router } from "@inertiajs/react";
 
+// Define the route function interface
+declare function route(name: string, params?: Record<string, any>): string;
+
 interface ZraConfig {
   id: number;
   tpin: string;
@@ -60,9 +63,12 @@ export default function ConfigForm({ config, isInitialized }: Props) {
       route("zra.test-sales"),
       {},
       {
-        onSuccess: (page) => {
+        onSuccess: (page: any) => {
           setTestLoading(false);
-          setTestResult(page.props.flash.data);
+          // Type-safe access to page.props.flash.data
+          if (page?.props?.flash?.data) {
+            setTestResult(page.props.flash.data);
+          }
         },
         onError: () => {
           setTestLoading(false);

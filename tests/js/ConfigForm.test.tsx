@@ -1,46 +1,48 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import ConfigForm from '../../resources/js/Pages/ZraConfig/components/ConfigForm';
 import '../setup';
 
-// Mock the useForm hook from inertia
-const mockUseForm = vi.fn();
-const mockSetData = vi.fn();
-const mockPost = vi.fn();
-const mockReset = vi.fn();
+// Use vi.hoisted to define variables that need to be available during hoisting
+const mockPostFn = vi.hoisted(() => vi.fn());
+const mockRouteFn = vi.hoisted(() => vi.fn((name) => {
+  if (name === 'zra.initialize') return '/zra/initialize';
+  if (name === 'zra.test-sales') return '/zra/test-sales';
+  return '/default-route';
+}));
 
-// Mock the router
+// Create a global route function
+// This has to be done before any imports that use it
+vi.stubGlobal('route', mockRouteFn);
+
+// Mock modules
 vi.mock('@inertiajs/react', () => ({
-  useForm: () => ({
+  router: {
+    post: mockPostFn
+  },
+  useForm: vi.fn().mockReturnValue({
     data: {
       tpin: '',
       branch_id: '',
       device_serial: '',
     },
-    setData: mockSetData,
-    post: mockPost,
+    setData: vi.fn(),
+    post: vi.fn(),
     processing: false,
     errors: {},
-    reset: mockReset,
-  }),
-  router: {
-    post: mockPost
-  }
+    reset: vi.fn(),
+  })
 }));
 
-// Mock the route function
-vi.mock('@inertiajs/core', () => ({
-  route: (name) => {
-    if (name === 'zra.initialize') return '/zra/initialize';
-    if (name === 'zra.test-sales') return '/zra/test-sales';
-    return '/default-route';
-  }
-}));
+// Import the component after mocks are set up
+import ConfigForm from '../../resources/js/Pages/ZraConfig/components/ConfigForm';
 
 describe('ConfigForm Component', () => {
-  it('renders the initialization form when not initialized', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the initialization form when not initialized', () => {
     const props = {
       config: null,
       isInitialized: false,
@@ -86,7 +88,7 @@ describe('ConfigForm Component', () => {
     expect(screen.getByRole('button', { name: /Test Sales Submission/i })).toBeInTheDocument();
   });
 
-  it('submits the form with valid data', async () => {
+  it('submits the form with valid data', () => {
     const props = {
       config: null,
       isInitialized: false,
@@ -94,16 +96,25 @@ describe('ConfigForm Component', () => {
 
     render(<ConfigForm {...props} />);
     
-    // Fill out the form
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/TPIN/i), '1234567890');
-    await user.type(screen.getByLabelText(/Branch ID/i), '001');
-    await user.type(screen.getByLabelText(/Device Serial Number/i), 'DEVICE123456');
+    // Fill out the form fields
+    fireEvent.change(screen.getByLabelText(/TPIN/i), { target: { value: '1234567890' } });
+    fireEvent.change(screen.getByLabelText(/Branch ID/i), { target: { value: '001' } });
+    fireEvent.change(screen.getByLabelText(/Device Serial Number/i), { target: { value: 'DEVICE123456' } });
     
-    // Submit the form
-    await user.click(screen.getByRole('button', { name: /Initialize Device/i }));
+    // Find and submit the form
+    const submitButton = screen.getByRole('button', { name: /Initialize Device/i });
+    const form = submitButton.closest('form');
     
-    // Verify router.post was called
-    expect(mockPost).toHaveBeenCalled();
+    // Check if form element exists to fix TypeScript null error
+    if (form) {
+      fireEvent.submit(form);
+    } else {
+      // If we can't find the form, submit via the button click as fallback
+      fireEvent.click(submitButton);
+    }
+    
+    // Verify route and post were called
+    expect(mockRouteFn).toHaveBeenCalledWith('zra.initialize');
+    expect(mockPostFn).toHaveBeenCalled();
   });
 });

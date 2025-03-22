@@ -33,8 +33,9 @@ describe('StatusIndicator Component', () => {
     render(<StatusIndicator {...props} />);
     
     expect(screen.getByText(/Status:/)).toBeInTheDocument();
-    expect(screen.getByText(/Initialized/)).toBeInTheDocument();
-    expect(screen.getByText(/Sandbox \(Test\)/)).toBeInTheDocument();
+    // Use a more specific selector to avoid ambiguity
+    expect(screen.getByText(/^Initialized$/)).toBeInTheDocument();
+    expect(screen.getByText('Sandbox (Test)')).toBeInTheDocument();
     expect(screen.getByText(/Last Initialized:/)).toBeInTheDocument();
     expect(screen.getByText(/Last Sync:/)).toBeInTheDocument();
     expect(screen.getByText('Ready')).toBeInTheDocument();
@@ -51,8 +52,8 @@ describe('StatusIndicator Component', () => {
     render(<StatusIndicator {...props} />);
     
     expect(screen.getByText(/Status:/)).toBeInTheDocument();
-    expect(screen.getByText(/Not Initialized/)).toBeInTheDocument();
-    expect(screen.getByText(/Sandbox \(Test\)/)).toBeInTheDocument();
+    expect(screen.getByText('Not Initialized')).toBeInTheDocument();
+    expect(screen.getByText('Sandbox (Test)')).toBeInTheDocument();
     expect(screen.getByText('Needs Setup')).toBeInTheDocument();
   });
 
@@ -70,6 +71,6 @@ describe('StatusIndicator Component', () => {
 
     render(<StatusIndicator {...props} />);
     
-    expect(screen.getByText(/Production/)).toBeInTheDocument();
+    expect(screen.getByText('Production')).toBeInTheDocument();
   });
 });

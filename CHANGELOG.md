@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Frontend Test Suite**:
+  - Fixed StatusIndicator tests by using precise text selectors to avoid ambiguity
+  - Resolved ConfigForm test failures by correctly handling Vitest's module mocking hoisting
+  - Added proper TypeScript support with Jest DOM type extensions
+  - Fixed React imports across all test files
+  - Added setup file for proper TypeScript compatibility with testing-library
+- **TypeScript Errors**:
+  - Fixed route function declaration in ConfigForm component
+  - Added type-safe handling for page.props.flash in ConfigForm component
+  - Resolved undefined type error in StatusIndicator by using nullish coalescing operator
+  - Fixed type declarations for React components
+- Fixed Vitest configuration for frontend testing
+
 ## [0.3.0] - 2025-03-22
 
 ### Added
