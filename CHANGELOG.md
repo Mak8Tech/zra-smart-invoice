@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Added
+- **Deployment Infrastructure**:
+  - Added GitHub Actions workflow for running PHP tests
+  - Added GitHub Actions workflow for automatic README badge updates
+  - Created comprehensive deployment guide for Packagist.org in DEPLOYMENT.md
+  - Added LICENSE.md file with MIT license
+- **Backend Test Suite**:
+  - Fixed ZraServiceTest by properly handling device_id in additional_config JSON field
+  - Updated assertions to match actual implementation of transaction types ('sales' vs 'sales_data')
+  - Made tests more resilient with conditional checks for field presence
+  - Fixed transaction type naming in log assertions ('initialization' vs 'initialize_device')
+  - Added proper null handling for JSON fields
 - **Frontend Test Suite**:
   - Fixed StatusIndicator tests by using precise text selectors to avoid ambiguity
   - Resolved ConfigForm test failures by correctly handling Vitest's module mocking hoisting
@@ -20,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Resolved undefined type error in StatusIndicator by using nullish coalescing operator
   - Fixed type declarations for React components
 - Fixed Vitest configuration for frontend testing
+
+### Changed
+- **Documentation**:
+  - Enhanced README.md with badges for build status, version, PHP compatibility, Laravel version, and license
+  - Added clear instructions for installation and usage
+  - Improved code examples with proper syntax highlighting
 
 ## [0.3.0] - 2025-03-22
 

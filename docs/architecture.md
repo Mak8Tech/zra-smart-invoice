@@ -11,6 +11,7 @@ The ZRA Smart Invoice package is a Laravel integration that facilitates communic
 ### 1. Service Provider
 
 The `ZraServiceProvider` serves as the entry point for the package, handling:
+
 - Registration of services in the IoC container
 - Loading of routes, migrations, and configuration
 - Publishing of assets and configuration files
@@ -21,6 +22,7 @@ The `ZraServiceProvider` serves as the entry point for the package, handling:
 Two primary models manage the data:
 
 - **ZraConfig**: Stores device configuration and authentication details
+
   - Handles device initialization status
   - Manages environment settings (sandbox vs. production)
   - Tracks synchronization status with ZRA
@@ -46,6 +48,7 @@ The core business logic resides in services:
 The HTTP layer consists of:
 
 - **ZraController**: Processes web requests and returns responses
+
   - Configuration management
   - Device initialization
   - Status checks
@@ -89,6 +92,7 @@ CLI tooling for management and monitoring:
 ## Data Flow
 
 1. **Initialization Flow**:
+
    - User inputs TPIN, Branch ID, and Device Serial via ConfigForm
    - ZraController validates input via ZraConfigRequest
    - ZraService sends initialization request to ZRA API
@@ -96,6 +100,7 @@ CLI tooling for management and monitoring:
    - Status is updated and displayed to the user
 
 2. **Transaction Flow**:
+
    - Application calls ZraService methods or the Zra facade
    - Data validation occurs
    - Optional queueing for asynchronous processing

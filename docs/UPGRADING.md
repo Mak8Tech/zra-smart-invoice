@@ -5,6 +5,7 @@ This document provides step-by-step instructions for upgrading ZRA Smart Invoice
 ## Upgrading from 0.2.x to 0.3.0
 
 ### Prerequisites
+
 - PHP 8.0 or higher
 - Laravel 9.0 or higher
 - Composer 2.0 or higher
@@ -37,6 +38,7 @@ php artisan vendor:publish --tag=zra-config --force
 ```
 
 Review the updated configuration file and set new options as needed, especially:
+
 - Alert email settings for failure notifications
 - Rate limiting options
 - Role-based access control settings
@@ -76,6 +78,7 @@ php artisan view:clear
 ## Upgrading from 0.1.x to 0.2.0
 
 ### Prerequisites
+
 - PHP 8.0 or higher
 - Laravel 9.0 or higher
 - Composer 2.0 or higher
@@ -144,7 +147,7 @@ php artisan migrate
 
 Add the following to your `.env` file:
 
-```
+```php
 ZRA_ENVIRONMENT=sandbox
 ZRA_BASE_URL=https://api-sandbox.zra.org.zm/
 ZRA_TIMEOUT=30

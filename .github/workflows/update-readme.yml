@@ -1,0 +1,45 @@
+name: Update README
+
+on:
+  push:
+    branches: [ main, master ]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Update README badges
+        run: |
+          # Get the latest version
+          LATEST_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          LATEST_VERSION=${LATEST_VERSION#v}  # Remove leading 'v' if present
+          
+          # Update README with version badge
+          sed -i "s|https://img.shields.io/packagist/v/mak8tech/zra-smart-invoice.svg?.*|https://img.shields.io/packagist/v/mak8tech/zra-smart-invoice.svg?style=flat-square\\&label=Latest%20Version)](https://packagist.org/packages/mak8tech/zra-smart-invoice)|g" README.md
+          
+          # Update with build status badge
+          sed -i "s|https://github.com/mak8tech/zra-smart-invoice/workflows/.*|https://github.com/mak8tech/zra-smart-invoice/workflows/PHP%20Tests/badge.svg?branch=main)](https://github.com/mak8tech/zra-smart-invoice/actions?query=workflow%3A%22PHP+Tests%22+branch%3Amain)|g" README.md
+          
+          # Update minimum PHP version badge based on composer.json
+          PHP_VERSION=$(grep -o '"php": "\^[0-9]\.[0-9]"' composer.json | grep -o '[0-9]\.[0-9]')
+          sed -i "s|https://img.shields.io/badge/php-%3E%3D%20.*|https://img.shields.io/badge/php-%3E%3D%20${PHP_VERSION}-8892BF.svg?style=flat-square)](https://php.net/)|g" README.md
+          
+          # Update Laravel version badge
+          LARAVEL_VERSION=$(grep -o '"laravel/framework": "\^[0-9][0-9]\.[0-9]"' composer.json | grep -o '[0-9][0-9]\.[0-9]' || echo "12.0")
+          sed -i "s|https://img.shields.io/badge/laravel-%3E%3D%20.*|https://img.shields.io/badge/laravel-%3E%3D%20${LARAVEL_VERSION}-FF2D20.svg?style=flat-square)](https://laravel.com/)|g" README.md
+      
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add README.md
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update README badges [skip ci]" && git push)
