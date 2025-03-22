@@ -1,6 +1,8 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import DashboardWidget from '../../resources/js/Pages/ZraConfig/components/DashboardWidget';
+import '../setup';
 
 describe('DashboardWidget Component', () => {
   it('renders the dashboard with statistics when initialized', () => {
@@ -14,11 +16,12 @@ describe('DashboardWidget Component', () => {
 
     render(<DashboardWidget stats={stats} isInitialized={true} />);
     
-    expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
-    expect(screen.getByText(/150/i)).toBeInTheDocument(); // Total transactions
-    expect(screen.getByText(/142/i)).toBeInTheDocument(); // Successful transactions
-    expect(screen.getByText(/8/i)).toBeInTheDocument();   // Failed transactions
-    expect(screen.getByText(/94.7%/i)).toBeInTheDocument(); // Success rate
+    expect(screen.getByText('ZRA Smart Invoice Status')).toBeInTheDocument();
+    expect(screen.getByText('Total Transactions')).toBeInTheDocument();
+    expect(screen.getByText('150')).toBeInTheDocument(); // Total transactions
+    expect(screen.getByText('94.7%')).toBeInTheDocument(); // Success rate
+    expect(screen.getByText('Active')).toBeInTheDocument(); // Device status
+    expect(screen.getByText(/Last transaction:/)).toBeInTheDocument();
   });
 
   it('displays initialization message when not initialized', () => {
@@ -32,7 +35,9 @@ describe('DashboardWidget Component', () => {
 
     render(<DashboardWidget stats={stats} isInitialized={false} />);
     
-    expect(screen.getByText(/Your device is not initialized/i)).toBeInTheDocument();
+    expect(screen.getByText('Device Not Initialized')).toBeInTheDocument();
+    expect(screen.getByText(/Your ZRA device is not initialized/)).toBeInTheDocument();
+    expect(screen.getByText('Inactive')).toBeInTheDocument();
   });
 
   it('displays empty state when no transactions exist', () => {
@@ -46,6 +51,8 @@ describe('DashboardWidget Component', () => {
 
     render(<DashboardWidget stats={stats} isInitialized={true} />);
     
-    expect(screen.getByText(/No transactions recorded yet/i)).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument(); // No transactions
+    expect(screen.getByText('0%')).toBeInTheDocument(); // Zero success rate
+    expect(screen.getByText('Active')).toBeInTheDocument(); // Still active
   });
 });

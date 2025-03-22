@@ -2,7 +2,20 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import StatusIndicator from '../../resources/js/Pages/ZraConfig/components/StatusIndicator';
-import type { StatusIndicatorProps } from '../types';
+import '../setup';
+
+interface Status {
+  status: string;
+  message: string;
+  last_initialized?: string;
+}
+
+interface StatusIndicatorProps {
+  isInitialized: boolean;
+  environment: string;
+  status?: Status | undefined;
+  lastSync: string | null;
+}
 
 describe('StatusIndicator Component', () => {
   it('displays initialized status correctly', () => {
@@ -19,25 +32,28 @@ describe('StatusIndicator Component', () => {
 
     render(<StatusIndicator {...props} />);
     
-    expect(screen.getByText(/Device Status/i)).toBeInTheDocument();
-    expect(screen.getByText(/Initialized/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sandbox/i)).toBeInTheDocument();
-    expect(screen.getByText(/active/i)).toBeInTheDocument();
+    expect(screen.getByText(/Status:/)).toBeInTheDocument();
+    expect(screen.getByText(/Initialized/)).toBeInTheDocument();
+    expect(screen.getByText(/Sandbox \(Test\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Last Initialized:/)).toBeInTheDocument();
+    expect(screen.getByText(/Last Sync:/)).toBeInTheDocument();
+    expect(screen.getByText('Ready')).toBeInTheDocument();
   });
 
   it('displays uninitialized status correctly', () => {
     const props: StatusIndicatorProps = {
       isInitialized: false,
       environment: 'sandbox',
-      status: null,
+      status: undefined,
       lastSync: null,
     };
 
     render(<StatusIndicator {...props} />);
     
-    expect(screen.getByText(/Device Status/i)).toBeInTheDocument();
-    expect(screen.getByText(/Not Initialized/i)).toBeInTheDocument();
-    expect(screen.getByText(/Sandbox/i)).toBeInTheDocument();
+    expect(screen.getByText(/Status:/)).toBeInTheDocument();
+    expect(screen.getByText(/Not Initialized/)).toBeInTheDocument();
+    expect(screen.getByText(/Sandbox \(Test\)/)).toBeInTheDocument();
+    expect(screen.getByText('Needs Setup')).toBeInTheDocument();
   });
 
   it('displays production environment correctly', () => {
@@ -54,6 +70,6 @@ describe('StatusIndicator Component', () => {
 
     render(<StatusIndicator {...props} />);
     
-    expect(screen.getByText(/Production/i)).toBeInTheDocument();
+    expect(screen.getByText(/Production/)).toBeInTheDocument();
   });
 });

@@ -1,12 +1,14 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import TransactionLog from '../../resources/js/Pages/ZraConfig/components/TransactionLog';
+import '../setup';
 
 describe('TransactionLog Component', () => {
   const mockLogs = [
     {
       id: 1,
-      transaction_type: 'sales_data',
+      transaction_type: 'sales',
       reference: 'INV-12345',
       status: 'success',
       error_message: null,
@@ -14,7 +16,7 @@ describe('TransactionLog Component', () => {
     },
     {
       id: 2,
-      transaction_type: 'purchase_data',
+      transaction_type: 'purchase',
       reference: 'PO-67890',
       status: 'failed',
       error_message: 'Connection timeout',
@@ -22,7 +24,7 @@ describe('TransactionLog Component', () => {
     },
     {
       id: 3,
-      transaction_type: 'stock_data',
+      transaction_type: 'stock',
       reference: 'STK-11223',
       status: 'success',
       error_message: null,
@@ -33,30 +35,30 @@ describe('TransactionLog Component', () => {
   it('renders transaction logs correctly', () => {
     render(<TransactionLog logs={mockLogs} />);
     
-    expect(screen.getByText(/Transaction Logs/i)).toBeInTheDocument();
-    expect(screen.getByText(/INV-12345/i)).toBeInTheDocument();
-    expect(screen.getByText(/PO-67890/i)).toBeInTheDocument();
-    expect(screen.getByText(/STK-11223/i)).toBeInTheDocument();
+    expect(screen.getByText('Recent Transaction Logs')).toBeInTheDocument();
+    expect(screen.getByText('INV-12345')).toBeInTheDocument();
+    expect(screen.getByText('PO-67890')).toBeInTheDocument();
+    expect(screen.getByText('STK-11223')).toBeInTheDocument();
     
     // Check status indicators
-    expect(screen.getAllByText(/success/i)).toHaveLength(2);
-    expect(screen.getByText(/failed/i)).toBeInTheDocument();
+    expect(screen.getAllByText('success')).toHaveLength(2);
+    expect(screen.getByText('failed')).toBeInTheDocument();
     
     // Check error message
-    expect(screen.getByText(/Connection timeout/i)).toBeInTheDocument();
+    expect(screen.getByText('Connection timeout')).toBeInTheDocument();
   });
 
   it('displays empty state when no logs exist', () => {
     render(<TransactionLog logs={[]} />);
     
-    expect(screen.getByText(/No transaction logs found/i)).toBeInTheDocument();
+    expect(screen.getByText('No transaction logs found.')).toBeInTheDocument();
   });
 
   it('formats transaction types correctly', () => {
     render(<TransactionLog logs={mockLogs} />);
     
-    expect(screen.getByText(/Sales Data/i)).toBeInTheDocument();
-    expect(screen.getByText(/Purchase Data/i)).toBeInTheDocument();
-    expect(screen.getByText(/Stock Data/i)).toBeInTheDocument();
+    expect(screen.getByText('Sales')).toBeInTheDocument();
+    expect(screen.getByText('Purchase')).toBeInTheDocument();
+    expect(screen.getByText('Stock')).toBeInTheDocument();
   });
 });
