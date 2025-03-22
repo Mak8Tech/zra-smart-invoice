@@ -35,6 +35,7 @@ class ZraController extends Controller
     public function index(): Response
     {
         $config = ZraConfig::getActive();
+        $stats = $this->zraService->getStatistics();
 
         return Inertia::render('ZraConfig/Index', [
             'config' => $config ? [
@@ -59,6 +60,7 @@ class ZraController extends Controller
             }),
             'is_initialized' => $this->zraService->isInitialized(),
             'environment' => config('zra.base_url') === 'https://api-sandbox.zra.org.zm/vsdc-api/v1' ? 'sandbox' : 'production',
+            'stats' => $stats,
         ]);
     }
 
@@ -195,6 +197,90 @@ class ZraController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get statistics
+     *
+     * @return array
+     */
+    public function statistics(): array
+    {
+        return [
+            'stats' => $this->zraService->getStatistics(),
+            'initialized' => $this->zraService->isInitialized(),
+        ];
+    }
+
+    /**
+     * Check the health of the ZRA API connection
+     *
+     * @return array
+     */
+    public function checkHealth(): array
+    {
+        return $this->zraService->healthCheck();
+    }
+
+    /**
+     * Process a transaction in the queue
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function queueTransaction(Request $request): array
+    {
+        try {
+            $type = $request->input('type');
+            $data = $request->input('data', []);
+            
+            // Validate transaction type
+            if (!in_array($type, ['sales', 'purchase', 'stock'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid transaction type. Must be one of: sales, purchase, stock',
+                ];
+            }
+            
+            // Ensure device is initialized
+            if (!$this->zraService->isInitialized()) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not initialized. Please initialize the device first.',
+                ];
+            }
+            
+            // Process the transaction in the queue based on type
+            switch ($type) {
+                case 'sales':
+                    $result = $this->zraService->sendSalesData($data, true);
+                    break;
+                
+                case 'purchase':
+                    $result = $this->zraService->sendPurchaseData($data, true);
+                    break;
+                
+                case 'stock':
+                    $result = $this->zraService->sendStockData($data, true);
+                    break;
+            }
+            
+            return [
+                'success' => true,
+                'message' => ucfirst($type) . ' data has been queued for processing',
+                'reference' => $result['reference'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to queue ZRA transaction', [
+                'error' => $e->getMessage(),
+                'type' => $request->input('type'),
+            ]);
+            
             return [
                 'success' => false,
                 'message' => $e->getMessage(),

@@ -4,6 +4,7 @@ import { Head } from "@inertiajs/react";
 import ConfigForm from "./components/ConfigForm";
 import StatusIndicator from "./components/StatusIndicator";
 import TransactionLog from "./components/TransactionLog";
+import DashboardWidget from "./components/DashboardWidget";
 
 interface ZraConfig {
   id: number;
@@ -29,11 +30,20 @@ interface Log {
   created_at: string;
 }
 
+interface Stats {
+  total_transactions: number;
+  successful_transactions: number;
+  failed_transactions: number;
+  success_rate: number;
+  last_transaction_date: string | null;
+}
+
 interface Props {
   config: ZraConfig | null;
   logs: Log[];
   is_initialized: boolean;
   environment: string;
+  stats: Stats;
 }
 
 export default function Index({
@@ -41,8 +51,9 @@ export default function Index({
   logs,
   is_initialized,
   environment,
+  stats,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"config" | "logs">("config");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "config" | "logs">("dashboard");
 
   return (
     <>
@@ -66,6 +77,16 @@ export default function Index({
               <div className="mt-6 border-b border-gray-200 mb-6">
                 <nav className="-mb-px flex space-x-8">
                   <button
+                    onClick={() => setActiveTab("dashboard")}
+                    className={`${
+                      activeTab === "dashboard"
+                        ? "border-indigo-500 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Dashboard
+                  </button>
+                  <button
                     onClick={() => setActiveTab("config")}
                     className={`${
                       activeTab === "config"
@@ -88,9 +109,15 @@ export default function Index({
                 </nav>
               </div>
 
-              {activeTab === "config" ? (
+              {activeTab === "dashboard" && (
+                <DashboardWidget stats={stats} isInitialized={is_initialized} />
+              )}
+
+              {activeTab === "config" && (
                 <ConfigForm config={config} isInitialized={is_initialized} />
-              ) : (
+              )}
+
+              {activeTab === "logs" && (
                 <TransactionLog logs={logs} />
               )}
             </div>

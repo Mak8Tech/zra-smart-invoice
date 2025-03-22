@@ -74,12 +74,24 @@ class ZraService
      * Send sales data to ZRA
      *
      * @param array $salesData
+     * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendSalesData(array $salesData): array
+    public function sendSalesData(array $salesData, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        if ($queue) {
+            // Dispatch job to queue
+            \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('sales', $salesData);
+            
+            return [
+                'success' => true,
+                'message' => 'Sales data queued for processing',
+                'reference' => uniqid('zra_queued_', true),
+            ];
+        }
 
         $endpoint = '/sales/selectSaleInfo';
 
@@ -96,12 +108,24 @@ class ZraService
      * Send purchase data to ZRA
      *
      * @param array $purchaseData
+     * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendPurchaseData(array $purchaseData): array
+    public function sendPurchaseData(array $purchaseData, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        if ($queue) {
+            // Dispatch job to queue
+            \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('purchase', $purchaseData);
+            
+            return [
+                'success' => true,
+                'message' => 'Purchase data queued for processing',
+                'reference' => uniqid('zra_queued_', true),
+            ];
+        }
 
         $endpoint = '/purchases/selectPurchaseInfo';
 
@@ -118,12 +142,24 @@ class ZraService
      * Send stock data to ZRA
      *
      * @param array $stockData
+     * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendStockData(array $stockData): array
+    public function sendStockData(array $stockData, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        if ($queue) {
+            // Dispatch job to queue
+            \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('stock', $stockData);
+            
+            return [
+                'success' => true,
+                'message' => 'Stock data queued for processing',
+                'reference' => uniqid('zra_queued_', true),
+            ];
+        }
 
         $endpoint = '/stock/selectStockInfo';
 
@@ -389,5 +425,77 @@ class ZraService
         }
 
         return 'general';
+    }
+
+    /**
+     * Get transaction statistics
+     * 
+     * @return array
+     */
+    public function getStatistics(): array
+    {
+        $totalCount = ZraTransactionLog::count();
+        $successCount = ZraTransactionLog::where('status', 'success')->count();
+        $failedCount = ZraTransactionLog::where('status', 'failed')->count();
+        
+        $successRate = $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 0;
+        
+        $lastTransaction = ZraTransactionLog::latest()->first();
+        
+        return [
+            'total_transactions' => $totalCount,
+            'successful_transactions' => $successCount,
+            'failed_transactions' => $failedCount,
+            'success_rate' => $successRate,
+            'last_transaction_date' => $lastTransaction ? $lastTransaction->created_at->format('Y-m-d H:i:s') : null,
+        ];
+    }
+
+    /**
+     * Perform a health check on the ZRA API
+     * 
+     * @return array
+     */
+    public function healthCheck(): array
+    {
+        if (!$this->isInitialized()) {
+            return [
+                'success' => false,
+                'message' => 'Device not initialized',
+                'status' => 'not_initialized',
+            ];
+        }
+        
+        try {
+            // Try to make a ping or simple API call to check if the connection works
+            $baseUrl = config('zra.base_url');
+            $client = new Client(['timeout' => 5]);
+            $response = $client->request('GET', $baseUrl, ['http_errors' => false]);
+            
+            $statusCode = $response->getStatusCode();
+            
+            if ($statusCode >= 200 && $statusCode < 500) {
+                return [
+                    'success' => true,
+                    'message' => 'API connection successful',
+                    'status' => 'connected',
+                    'status_code' => $statusCode,
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'API connection failed with status ' . $statusCode,
+                    'status' => 'error',
+                    'status_code' => $statusCode,
+                ];
+            }
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'API connection failed: ' . $e->getMessage(),
+                'status' => 'error',
+                'error' => $e->getMessage(),
+            ];
+        }
     }
 }

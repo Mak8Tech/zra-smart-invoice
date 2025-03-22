@@ -3,6 +3,7 @@
 namespace Mak8Tech\ZraSmartInvoice;
 
 use Illuminate\Support\ServiceProvider;
+use Mak8Tech\ZraSmartInvoice\Console\Commands\ZraHealthCheckCommand;
 use Mak8Tech\ZraSmartInvoice\Services\ZraService;
 
 class ZraServiceProvider extends ServiceProvider
@@ -27,6 +28,13 @@ class ZraServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/js' => resource_path('js/vendor/mak8tech/zra-smart-invoice'),
         ], 'inertia-components');
+        
+        // Register commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ZraHealthCheckCommand::class,
+            ]);
+        }
     }
 
     /**
