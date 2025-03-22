@@ -1,0 +1,134 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: zra_smart_invoice_test
+          MYSQL_USER: zra_user
+          MYSQL_PASSWORD: zra_password
+          MYSQL_ROOT_PASSWORD: root_password
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, mysql, gd, zip
+          coverage: xdebug
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+          
+      - name: Cache NPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
+      
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+      
+      - name: Install NPM dependencies
+        run: npm ci
+      
+      - name: Run PHP tests
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: zra_smart_invoice_test
+          DB_USERNAME: zra_user
+          DB_PASSWORD: zra_password
+      
+      - name: Run Frontend tests
+        run: npm test
+      
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse src
+      
+      - name: Run ESLint
+        run: npm run lint
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+  
+  build:
+    name: Build and Package
+    needs: tests
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, mysql, gd, zip
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Composer dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+      
+      - name: Install NPM dependencies
+        run: npm ci
+      
+      - name: Build Frontend Assets
+        run: npm run build
+      
+      - name: Create Release Package
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p release
+          cp -R src/ release/
+          cp -R resources/ release/
+          cp -R config/ release/
+          cp -R database/ release/
+          cp -R dist/ release/
+          cp composer.json release/
+          cp LICENSE release/
+          cp README.md release/
+          cp CHANGELOG.md release/
+          cd release && zip -r ../zra-smart-invoice.zip .
+      
+      - name: Upload Release Asset
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zra-smart-invoice
+          path: zra-smart-invoice.zip

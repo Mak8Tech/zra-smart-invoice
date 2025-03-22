@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: zra-smart-invoice
+    container_name: zra-smart-invoice-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - zra-network
+    depends_on:
+      - mysql
+      - redis
+
+  nginx:
+    image: nginx:alpine
+    container_name: zra-smart-invoice-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - zra-network
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: zra-smart-invoice-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: zra_smart_invoice
+      MYSQL_USER: zra_user
+      MYSQL_PASSWORD: zra_password
+      MYSQL_ROOT_PASSWORD: root_password
+      SERVICE_NAME: mysql
+    volumes:
+      - zra-mysql-data:/var/lib/mysql
+    networks:
+      - zra-network
+
+  redis:
+    image: redis:alpine
+    container_name: zra-smart-invoice-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - zra-network
+
+networks:
+  zra-network:
+    driver: bridge
+
+volumes:
+  zra-mysql-data:
+    driver: local
