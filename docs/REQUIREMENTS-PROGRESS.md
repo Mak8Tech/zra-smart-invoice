@@ -1,5 +1,7 @@
 # ZRA Smart Invoice Implementation Progress
 
+This document tracks the implementation progress of requirements for ZRA Smart Invoice version 1.0.0.
+
 ## Package Structure Requirements
 
 - [x] Proper directory structure following Laravel package conventions

@@ -2,6 +2,98 @@
 
 This document provides step-by-step instructions for upgrading ZRA Smart Invoice between versions.
 
+## Installing Version 1.0.0
+
+This is the initial version of ZRA Smart Invoice. Follow these installation steps to get started.
+
+### Prerequisites
+
+- PHP 8.0 or higher
+- Laravel 9.0 or higher
+- Composer 2.0 or higher
+- npm 8.0 or higher
+- Node.js 16.0 or higher
+
+### Step 1: Install the package
+
+Install the package via Composer:
+
+```bash
+composer require mak8tech/zra-smart-invoice:^1.0.0
+```
+
+### Step 2: Publish the configuration
+
+Publish the configuration file to customize settings:
+
+```bash
+php artisan vendor:publish --tag=zra-config
+```
+
+### Step 3: Run migrations
+
+Set up the required database tables:
+
+```bash
+php artisan migrate
+```
+
+### Step 4: Publish assets (if using package frontend)
+
+```bash
+php artisan vendor:publish --tag=zra-assets
+```
+
+### Step 5: Install frontend dependencies
+
+```bash
+npm install
+```
+
+### Step 6: Build frontend assets
+
+```bash
+npm run build
+```
+
+### Step 7: Configure environment variables
+
+Add the following to your `.env` file:
+
+```php
+ZRA_ENVIRONMENT=sandbox
+ZRA_BASE_URL=https://api-sandbox.zra.org.zm/
+ZRA_TIMEOUT=30
+```
+
+### Step 8: Enable the service provider
+
+Ensure the service provider is registered in your `config/app.php`:
+
+```php
+'providers' => [
+    // ...
+    Mak8Tech\ZraSmartInvoice\ZraServiceProvider::class,
+],
+```
+
+### Step 9: Register the facade (optional)
+
+```php
+'aliases' => [
+    // ...
+    'Zra' => Mak8Tech\ZraSmartInvoice\Facades\Zra::class,
+],
+```
+
+### Step 10: Clear caches
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
 ## Upgrading from 0.2.x to 0.3.0
 
 ### Prerequisites
