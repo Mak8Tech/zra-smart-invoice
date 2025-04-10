@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
 use Mak8Tech\ZraSmartInvoice\Models\ZraTransactionLog;
+use Mak8Tech\ZraSmartInvoice\Services\ZraTaxService;
 
 class ZraService
 {
@@ -22,11 +23,17 @@ class ZraService
     protected $config;
 
     /**
+     * @var ZraTaxService
+     */
+    protected $taxService;
+
+    /**
      * Constructor
      */
     public function __construct()
     {
         $this->config = ZraConfig::getActive();
+        $this->taxService = new ZraTaxService();
 
         $this->httpClient = new Client([
             'base_uri' => config('zra.base_url'),
@@ -102,6 +109,18 @@ class ZraService
         $salesData['invoice_type'] = $invoiceType;
         $salesData['transaction_type'] = $transactionType;
 
+        // Process tax calculations if auto-calculate is enabled and items are provided
+        if (config('zra.auto_calculate_tax', true) && isset($salesData['items']) && is_array($salesData['items'])) {
+            $taxCalculation = $this->taxService->calculateInvoiceTax($salesData['items']);
+            $formattedTaxData = $this->taxService->formatTaxForApi($taxCalculation);
+
+            // Merge the tax data with the sales data
+            $salesData['items'] = $formattedTaxData['items'];
+            $salesData['totalAmount'] = $formattedTaxData['totalAmount'];
+            $salesData['totalTax'] = $formattedTaxData['totalTax'];
+            $salesData['taxSummary'] = $formattedTaxData['taxSummary'];
+        }
+
         if ($queue) {
             // Dispatch job to queue
             \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('sales', $salesData);
@@ -156,6 +175,18 @@ class ZraService
         $purchaseData['invoice_type'] = $invoiceType;
         $purchaseData['transaction_type'] = $transactionType;
 
+        // Process tax calculations if auto-calculate is enabled and items are provided
+        if (config('zra.auto_calculate_tax', true) && isset($purchaseData['items']) && is_array($purchaseData['items'])) {
+            $taxCalculation = $this->taxService->calculateInvoiceTax($purchaseData['items']);
+            $formattedTaxData = $this->taxService->formatTaxForApi($taxCalculation);
+
+            // Merge the tax data with the purchase data
+            $purchaseData['items'] = $formattedTaxData['items'];
+            $purchaseData['totalAmount'] = $formattedTaxData['totalAmount'];
+            $purchaseData['totalTax'] = $formattedTaxData['totalTax'];
+            $purchaseData['taxSummary'] = $formattedTaxData['taxSummary'];
+        }
+
         if ($queue) {
             // Dispatch job to queue
             \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('purchase', $purchaseData);
@@ -209,6 +240,18 @@ class ZraService
         // Add invoice type and transaction type to stock data
         $stockData['invoice_type'] = $invoiceType;
         $stockData['transaction_type'] = $transactionType;
+
+        // Process tax calculations if auto-calculate is enabled and items are provided
+        if (config('zra.auto_calculate_tax', true) && isset($stockData['items']) && is_array($stockData['items'])) {
+            $taxCalculation = $this->taxService->calculateInvoiceTax($stockData['items']);
+            $formattedTaxData = $this->taxService->formatTaxForApi($taxCalculation);
+
+            // Merge the tax data with the stock data
+            $stockData['items'] = $formattedTaxData['items'];
+            $stockData['totalAmount'] = $formattedTaxData['totalAmount'];
+            $stockData['totalTax'] = $formattedTaxData['totalTax'];
+            $stockData['taxSummary'] = $formattedTaxData['taxSummary'];
+        }
 
         if ($queue) {
             // Dispatch job to queue
@@ -557,5 +600,58 @@ class ZraService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Get all available tax categories
+     *
+     * @return array
+     */
+    public function getTaxCategories(): array
+    {
+        return $this->taxService->getTaxCategories();
+    }
+
+    /**
+     * Get all exemption categories
+     *
+     * @return array
+     */
+    public function getExemptionCategories(): array
+    {
+        return $this->taxService->getExemptionCategories();
+    }
+
+    /**
+     * Calculate tax for an invoice
+     *
+     * @param array $items
+     * @return array
+     */
+    public function calculateTax(array $items): array
+    {
+        return $this->taxService->calculateInvoiceTax($items);
+    }
+
+    /**
+     * Check if a tax category is zero-rated
+     *
+     * @param string $taxCategory
+     * @return bool
+     */
+    public function isZeroRated(string $taxCategory): bool
+    {
+        return $this->taxService->isZeroRated($taxCategory);
+    }
+
+    /**
+     * Check if a tax category is exempt
+     *
+     * @param string $taxCategory
+     * @return bool
+     */
+    public function isExempt(string $taxCategory): bool
+    {
+        return $this->taxService->isExempt($taxCategory);
     }
 }

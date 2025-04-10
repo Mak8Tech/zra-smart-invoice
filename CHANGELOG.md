@@ -12,11 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Support for Various Invoice Types (REQ-001)**:
+
   - Added configuration options for invoice types (NORMAL, COPY, TRAINING, PROFORMA)
   - Added support for transaction types (SALE, CREDIT_NOTE, DEBIT_NOTE, ADJUSTMENT, REFUND)
   - Updated ZraService to accept and validate invoice and transaction types
   - Enhanced ConfigForm UI with dropdown selectors for invoice and transaction types
   - Updated controller to pass invoice and transaction type parameters
+
+- **Comprehensive Tax Handling (REQ-002)**:
+  - Added ZraTaxService for tax calculations based on different tax categories
+  - Implemented support for multiple tax categories (VAT, Tourism Levy, Excise Duty)
+  - Added zero-rated and exempt transaction handling
+  - Updated UI to include tax category selection
+  - Added tax calculation API endpoints
+  - Implemented tax summary display in test results
 
 ## [1.0.0] - 2025-03-15
 

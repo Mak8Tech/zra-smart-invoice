@@ -73,4 +73,80 @@ return [
 
     // Default transaction type
     'default_transaction_type' => env('ZRA_DEFAULT_TRANSACTION_TYPE', 'SALE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tax Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define the available tax categories, rates, and settings for handling
+    | zero-rated and exempt transactions as per ZRA requirements.
+    |
+    */
+
+    // Tax categories
+    'tax_categories' => [
+        'VAT' => [
+            'name' => 'Value Added Tax',
+            'code' => 'VAT',
+            'default_rate' => 16.0, // 16% default VAT rate
+            'applies_to' => 'goods_and_services',
+        ],
+        'TOURISM_LEVY' => [
+            'name' => 'Tourism Levy',
+            'code' => 'TL',
+            'default_rate' => 1.5, // 1.5% tourism levy
+            'applies_to' => 'tourism_services',
+        ],
+        'EXCISE' => [
+            'name' => 'Excise Duty',
+            'code' => 'EXCISE',
+            'default_rate' => 10.0, // Default excise duty
+            'applies_to' => 'excise_goods',
+        ],
+        'ZERO_RATED' => [
+            'name' => 'Zero Rated',
+            'code' => 'ZR',
+            'default_rate' => 0.0,
+            'applies_to' => 'zero_rated_goods',
+        ],
+        'EXEMPT' => [
+            'name' => 'Tax Exempt',
+            'code' => 'EXEMPT',
+            'default_rate' => 0.0,
+            'applies_to' => 'exempt_goods',
+        ],
+    ],
+
+    // Default tax category
+    'default_tax_category' => env('ZRA_DEFAULT_TAX_CATEGORY', 'VAT'),
+
+    // Tax exemption categories and codes
+    'exemption_categories' => [
+        'DIPLOMATIC' => 'Diplomatic Exemption',
+        'GOVERNMENT' => 'Government Institution',
+        'HEALTHCARE' => 'Healthcare Related',
+        'EDUCATION' => 'Educational Institution',
+        'NGO' => 'Non-Governmental Organization',
+        'OTHER' => 'Other Exemption',
+    ],
+
+    // Enable automatic tax calculation
+    'auto_calculate_tax' => env('ZRA_AUTO_CALCULATE_TAX', true),
+
+    // Round tax amounts to nearest
+    'tax_rounding' => env('ZRA_TAX_ROUNDING', 2), // 2 decimal places
+
+    // Tax item category codes - for specific item categorization
+    'tax_item_categories' => [
+        'STANDARD' => 'Standard Rated Goods/Services',
+        'ZERO_RATED' => 'Zero Rated Goods/Services',
+        'EXEMPT' => 'Exempt Goods/Services',
+        'SERVICE' => 'Services',
+        'FOOD' => 'Food Items',
+        'ALCOHOL' => 'Alcoholic Beverages',
+        'TOBACCO' => 'Tobacco Products',
+        'FUEL' => 'Fuel Products',
+        'EXPORT' => 'Export Items',
+    ],
 ];

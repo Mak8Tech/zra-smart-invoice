@@ -167,6 +167,7 @@ class ZraController extends Controller
             // Get invoice and transaction types from request or use defaults
             $invoiceType = $request->input('invoice_type', config('zra.default_invoice_type'));
             $transactionType = $request->input('transaction_type', config('zra.default_transaction_type'));
+            $taxCategory = $request->input('tax_category', config('zra.default_tax_category'));
 
             // Sample sales data
             $salesData = [
@@ -174,16 +175,24 @@ class ZraController extends Controller
                 'timestamp' => now()->format('Y-m-d H:i:s'),
                 'items' => [
                     [
-                        'name' => 'Test Product',
+                        'name' => 'Standard VAT Product',
                         'quantity' => 2,
                         'unitPrice' => 100.00,
-                        'totalAmount' => 200.00,
-                        'taxRate' => 16,
-                        'taxAmount' => 32.00,
+                        'taxCategory' => 'VAT',
+                    ],
+                    [
+                        'name' => 'Zero-Rated Product',
+                        'quantity' => 1,
+                        'unitPrice' => 50.00,
+                        'taxCategory' => 'ZERO_RATED',
+                    ],
+                    [
+                        'name' => 'Tourism Service',
+                        'quantity' => 1,
+                        'unitPrice' => 200.00,
+                        'taxCategory' => 'TOURISM_LEVY',
                     ],
                 ],
-                'totalAmount' => 200.00,
-                'totalTax' => 32.00,
                 'paymentType' => 'CASH',
                 'customerTpin' => '',  // Optional for customer without TPIN
             ];
@@ -199,6 +208,7 @@ class ZraController extends Controller
                 'data' => $result['data'] ?? null,
                 'invoice_type' => $invoiceType,
                 'transaction_type' => $transactionType,
+                'tax_details' => $result['data']['taxSummary'] ?? [],
             ];
         } catch (Exception $e) {
             Log::error('ZRA test sales submission failed', [
@@ -289,6 +299,51 @@ class ZraController extends Controller
                 'type' => $request->input('type'),
             ]);
 
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get tax categories
+     *
+     * @return array
+     */
+    public function taxCategories(): array
+    {
+        return [
+            'tax_categories' => $this->zraService->getTaxCategories(),
+            'exemption_categories' => $this->zraService->getExemptionCategories(),
+        ];
+    }
+
+    /**
+     * Calculate tax for items
+     *
+     * @param Request $request
+     * @return array
+     */
+    public function calculateTax(Request $request): array
+    {
+        try {
+            $items = $request->input('items', []);
+
+            if (empty($items)) {
+                return [
+                    'success' => false,
+                    'message' => 'No items provided for tax calculation',
+                ];
+            }
+
+            $taxResult = $this->zraService->calculateTax($items);
+
+            return [
+                'success' => true,
+                'data' => $taxResult,
+            ];
+        } catch (Exception $e) {
             return [
                 'success' => false,
                 'message' => $e->getMessage(),

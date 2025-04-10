@@ -7,7 +7,7 @@ This document tracks the implementation progress of requirements for ZRA Smart I
 | **ID**  | **Requirement**                     | **Status**   | **Version Implemented** |
 | ------- | ----------------------------------- | ------------ | ----------------------- |
 | REQ-001 | Support for Various Invoice Types   | ✅ Completed | 1.0.1                   |
-| REQ-002 | Comprehensive Tax Handling          | ⏳ Pending   | -                       |
+| REQ-002 | Comprehensive Tax Handling          | ✅ Completed | 1.0.1                   |
 | REQ-003 | Report Generation (X and Z Reports) | ⏳ Pending   | -                       |
 | REQ-004 | Inventory Management Integration    | ⏳ Pending   | -                       |
 | REQ-005 | Security Enhancements               | ⏳ Pending   | -                       |
@@ -23,6 +23,15 @@ This document tracks the implementation progress of requirements for ZRA Smart I
 - ✅ Enhanced the `resources/js/Pages/ZraConfig/components/ConfigForm.tsx` with UI for selecting types
 - ✅ Added configuration options for invoice and transaction types in `config/zra.php`
 - ✅ Updated the controller to handle and pass new parameters
+
+## REQ-002: Comprehensive Tax Handling
+
+- ✅ Created new `src/Services/ZraTaxService.php` for tax calculations based on different tax categories
+- ✅ Added tax category configuration to `config/zra.php` with VAT, Tourism Levy, Excise Duty, etc.
+- ✅ Implemented support for zero-rated and exempt transactions
+- ✅ Updated ZraService to incorporate tax calculations in sales, purchase and stock data methods
+- ✅ Enhanced ConfigForm UI with tax category selection and display of tax details
+- ✅ Added tax calculation endpoints to the controller
 
 ---
 

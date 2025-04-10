@@ -30,6 +30,12 @@ interface TransactionTypeOption {
   label: string;
 }
 
+interface TaxCategoryOption {
+  code: string;
+  name: string;
+  rate: number;
+}
+
 interface Props {
   config: ZraConfig | null;
   isInitialized: boolean;
@@ -43,13 +49,17 @@ export default function ConfigForm({ config, isInitialized }: Props) {
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
-  // New state for invoice and transaction types
+  // State for invoice and transaction types
   const [invoiceType, setInvoiceType] = useState<string>("NORMAL");
   const [transactionType, setTransactionType] = useState<string>("SALE");
   const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<
     TransactionTypeOption[]
   >([]);
+
+  // State for tax categories
+  const [taxCategory, setTaxCategory] = useState<string>("VAT");
+  const [taxCategories, setTaxCategories] = useState<TaxCategoryOption[]>([]);
 
   // Fetch invoice and transaction types on component mount
   useEffect(() => {
@@ -68,6 +78,15 @@ export default function ConfigForm({ config, isInitialized }: Props) {
       { value: "DEBIT_NOTE", label: "Debit Note" },
       { value: "ADJUSTMENT", label: "Adjustment" },
       { value: "REFUND", label: "Refund" },
+    ]);
+
+    // Set tax categories
+    setTaxCategories([
+      { code: "VAT", name: "Value Added Tax", rate: 16.0 },
+      { code: "TOURISM_LEVY", name: "Tourism Levy", rate: 1.5 },
+      { code: "EXCISE", name: "Excise Duty", rate: 10.0 },
+      { code: "ZERO_RATED", name: "Zero Rated", rate: 0.0 },
+      { code: "EXEMPT", name: "Tax Exempt", rate: 0.0 },
     ]);
   }, []);
 
@@ -102,6 +121,7 @@ export default function ConfigForm({ config, isInitialized }: Props) {
       {
         invoice_type: invoiceType,
         transaction_type: transactionType,
+        tax_category: taxCategory,
       },
       {
         onSuccess: (page: any) => {
@@ -224,6 +244,31 @@ export default function ConfigForm({ config, isInitialized }: Props) {
                 </select>
               </div>
             </div>
+
+            <div className="mt-6">
+              <label
+                htmlFor="tax_category"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Default Tax Category
+              </label>
+              <select
+                id="tax_category"
+                value={taxCategory}
+                onChange={(e) => setTaxCategory(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                {taxCategories.map((category) => (
+                  <option key={category.code} value={category.code}>
+                    {category.name} ({category.rate}%)
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                This tax category will be applied to all items by default. Items
+                can have different tax categories in the actual API calls.
+              </p>
+            </div>
           </>
         )}
 
@@ -302,6 +347,54 @@ export default function ConfigForm({ config, isInitialized }: Props) {
                 {testResult.reference && (
                   <p className="mt-1">Reference: {testResult.reference}</p>
                 )}
+
+                {testResult.tax_details &&
+                  Object.keys(testResult.tax_details).length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Tax Summary:</h4>
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th
+                              scope="col"
+                              className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Category
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Rate
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Amount
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {Object.entries(testResult.tax_details).map(
+                            ([key, value]: [string, any]) => (
+                              <tr key={key}>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs">
+                                  {value.name}
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs">
+                                  {value.tax_rate}%
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs">
+                                  {value.tax_amount.toFixed(2)}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
