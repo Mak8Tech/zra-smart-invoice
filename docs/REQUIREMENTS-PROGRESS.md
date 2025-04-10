@@ -1,6 +1,30 @@
 # ZRA Smart Invoice Implementation Progress
 
-This document tracks the implementation progress of requirements for ZRA Smart Invoice version 1.0.0.
+This document tracks the implementation progress of requirements for ZRA Smart Invoice version 1.0.1.
+
+## Version 1.0.1 Requirements Progress
+
+| **ID**  | **Requirement**                     | **Status**   | **Version Implemented** |
+| ------- | ----------------------------------- | ------------ | ----------------------- |
+| REQ-001 | Support for Various Invoice Types   | ✅ Completed | 1.0.1                   |
+| REQ-002 | Comprehensive Tax Handling          | ⏳ Pending   | -                       |
+| REQ-003 | Report Generation (X and Z Reports) | ⏳ Pending   | -                       |
+| REQ-004 | Inventory Management Integration    | ⏳ Pending   | -                       |
+| REQ-005 | Security Enhancements               | ⏳ Pending   | -                       |
+| REQ-006 | User Interface Improvements         | ⏳ Pending   | -                       |
+| REQ-007 | Documentation                       | ⏳ Pending   | -                       |
+| REQ-008 | Testing                             | ⏳ Pending   | -                       |
+| REQ-009 | Performance Optimization            | ⏳ Pending   | -                       |
+| REQ-010 | Error Handling and Logging          | ⏳ Pending   | -                       |
+
+## REQ-001: Support for Various Invoice Types
+
+- ✅ Updated `src/Services/ZraService.php` to include invoice and transaction type parameters
+- ✅ Enhanced the `resources/js/Pages/ZraConfig/components/ConfigForm.tsx` with UI for selecting types
+- ✅ Added configuration options for invoice and transaction types in `config/zra.php`
+- ✅ Updated the controller to handle and pass new parameters
+
+---
 
 ## Package Structure Requirements
 

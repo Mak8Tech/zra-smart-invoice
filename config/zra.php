@@ -40,4 +40,37 @@ return [
         'attempts' => env('ZRA_RETRY_ATTEMPTS', 3),
         'delay' => env('ZRA_RETRY_DELAY', 2), // in seconds
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invoice Types Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Define the available invoice types and transaction types for ZRA compliance.
+    | These values are used when sending data to the ZRA API.
+    |
+    */
+
+    // Available invoice types
+    'invoice_types' => [
+        'NORMAL' => 'Normal Invoice',
+        'COPY' => 'Copy of Invoice',
+        'TRAINING' => 'Training Invoice',
+        'PROFORMA' => 'Proforma Invoice',
+    ],
+
+    // Default invoice type
+    'default_invoice_type' => env('ZRA_DEFAULT_INVOICE_TYPE', 'NORMAL'),
+
+    // Available transaction types
+    'transaction_types' => [
+        'SALE' => 'Sale',
+        'CREDIT_NOTE' => 'Credit Note',
+        'DEBIT_NOTE' => 'Debit Note',
+        'ADJUSTMENT' => 'Adjustment',
+        'REFUND' => 'Refund',
+    ],
+
+    // Default transaction type
+    'default_transaction_type' => env('ZRA_DEFAULT_TRANSACTION_TYPE', 'SALE'),
 ];

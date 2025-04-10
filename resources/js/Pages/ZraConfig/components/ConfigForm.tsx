@@ -1,5 +1,5 @@
 // resources/js/Pages/ZraConfig/components/ConfigForm.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { router } from "@inertiajs/react";
 
 // Define the route function interface
@@ -20,6 +20,16 @@ interface ZraConfig {
   last_sync_at: string | null;
 }
 
+interface InvoiceTypeOption {
+  value: string;
+  label: string;
+}
+
+interface TransactionTypeOption {
+  value: string;
+  label: string;
+}
+
 interface Props {
   config: ZraConfig | null;
   isInitialized: boolean;
@@ -32,6 +42,34 @@ export default function ConfigForm({ config, isInitialized }: Props) {
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
+
+  // New state for invoice and transaction types
+  const [invoiceType, setInvoiceType] = useState<string>("NORMAL");
+  const [transactionType, setTransactionType] = useState<string>("SALE");
+  const [invoiceTypes, setInvoiceTypes] = useState<InvoiceTypeOption[]>([]);
+  const [transactionTypes, setTransactionTypes] = useState<
+    TransactionTypeOption[]
+  >([]);
+
+  // Fetch invoice and transaction types on component mount
+  useEffect(() => {
+    // This would normally come from an API call, but we're using hardcoded values for now
+    // In a real application, you would fetch this from the backend
+    setInvoiceTypes([
+      { value: "NORMAL", label: "Normal Invoice" },
+      { value: "COPY", label: "Copy of Invoice" },
+      { value: "TRAINING", label: "Training Invoice" },
+      { value: "PROFORMA", label: "Proforma Invoice" },
+    ]);
+
+    setTransactionTypes([
+      { value: "SALE", label: "Sale" },
+      { value: "CREDIT_NOTE", label: "Credit Note" },
+      { value: "DEBIT_NOTE", label: "Debit Note" },
+      { value: "ADJUSTMENT", label: "Adjustment" },
+      { value: "REFUND", label: "Refund" },
+    ]);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +99,10 @@ export default function ConfigForm({ config, isInitialized }: Props) {
 
     router.post(
       route("zra.test-sales"),
-      {},
+      {
+        invoice_type: invoiceType,
+        transaction_type: transactionType,
+      },
       {
         onSuccess: (page: any) => {
           setTestLoading(false);
@@ -138,6 +179,54 @@ export default function ConfigForm({ config, isInitialized }: Props) {
           />
         </div>
 
+        {isInitialized && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  htmlFor="invoice_type"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Invoice Type
+                </label>
+                <select
+                  id="invoice_type"
+                  value={invoiceType}
+                  onChange={(e) => setInvoiceType(e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  {invoiceTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="transaction_type"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Transaction Type
+                </label>
+                <select
+                  id="transaction_type"
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  {transactionTypes.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="flex space-x-4">
           <button
             type="submit"
@@ -202,7 +291,7 @@ export default function ConfigForm({ config, isInitialized }: Props) {
                   testResult.success ? "text-green-800" : "text-red-800"
                 }`}
               >
-                {testResult.success ? "Test Successful" : "Test Failed"}
+                {testResult.success ? "Success" : "Error"}
               </h3>
               <div
                 className={`mt-2 text-sm ${

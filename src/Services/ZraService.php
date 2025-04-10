@@ -74,18 +74,38 @@ class ZraService
      * Send sales data to ZRA
      *
      * @param array $salesData
+     * @param string|null $invoiceType Type of invoice (NORMAL, COPY, TRAINING, PROFORMA)
+     * @param string|null $transactionType Type of transaction (SALE, CREDIT_NOTE, DEBIT_NOTE, etc)
      * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendSalesData(array $salesData, bool $queue = false): array
+    public function sendSalesData(array $salesData, ?string $invoiceType = null, ?string $transactionType = null, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        // Set invoice type and transaction type if not provided
+        $invoiceType = $invoiceType ?? config('zra.default_invoice_type');
+        $transactionType = $transactionType ?? config('zra.default_transaction_type');
+
+        // Validate invoice type
+        if (!array_key_exists($invoiceType, config('zra.invoice_types'))) {
+            throw new Exception("Invalid invoice type: {$invoiceType}");
+        }
+
+        // Validate transaction type
+        if (!array_key_exists($transactionType, config('zra.transaction_types'))) {
+            throw new Exception("Invalid transaction type: {$transactionType}");
+        }
+
+        // Add invoice type and transaction type to sales data
+        $salesData['invoice_type'] = $invoiceType;
+        $salesData['transaction_type'] = $transactionType;
 
         if ($queue) {
             // Dispatch job to queue
             \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('sales', $salesData);
-            
+
             return [
                 'success' => true,
                 'message' => 'Sales data queued for processing',
@@ -108,18 +128,38 @@ class ZraService
      * Send purchase data to ZRA
      *
      * @param array $purchaseData
+     * @param string|null $invoiceType Type of invoice (NORMAL, COPY, TRAINING, PROFORMA)
+     * @param string|null $transactionType Type of transaction (SALE, CREDIT_NOTE, DEBIT_NOTE, etc)
      * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendPurchaseData(array $purchaseData, bool $queue = false): array
+    public function sendPurchaseData(array $purchaseData, ?string $invoiceType = null, ?string $transactionType = null, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        // Set invoice type and transaction type if not provided
+        $invoiceType = $invoiceType ?? config('zra.default_invoice_type');
+        $transactionType = $transactionType ?? config('zra.default_transaction_type');
+
+        // Validate invoice type
+        if (!array_key_exists($invoiceType, config('zra.invoice_types'))) {
+            throw new Exception("Invalid invoice type: {$invoiceType}");
+        }
+
+        // Validate transaction type
+        if (!array_key_exists($transactionType, config('zra.transaction_types'))) {
+            throw new Exception("Invalid transaction type: {$transactionType}");
+        }
+
+        // Add invoice type and transaction type to purchase data
+        $purchaseData['invoice_type'] = $invoiceType;
+        $purchaseData['transaction_type'] = $transactionType;
 
         if ($queue) {
             // Dispatch job to queue
             \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('purchase', $purchaseData);
-            
+
             return [
                 'success' => true,
                 'message' => 'Purchase data queued for processing',
@@ -142,18 +182,38 @@ class ZraService
      * Send stock data to ZRA
      *
      * @param array $stockData
+     * @param string|null $invoiceType Type of invoice (NORMAL, COPY, TRAINING, PROFORMA)
+     * @param string|null $transactionType Type of transaction (SALE, CREDIT_NOTE, DEBIT_NOTE, etc)
      * @param bool $queue Whether to process the request in a queue
      * @return array
      * @throws Exception
      */
-    public function sendStockData(array $stockData, bool $queue = false): array
+    public function sendStockData(array $stockData, ?string $invoiceType = null, ?string $transactionType = null, bool $queue = false): array
     {
         $this->ensureInitialized();
+
+        // Set invoice type and transaction type if not provided
+        $invoiceType = $invoiceType ?? config('zra.default_invoice_type');
+        $transactionType = $transactionType ?? config('zra.default_transaction_type');
+
+        // Validate invoice type
+        if (!array_key_exists($invoiceType, config('zra.invoice_types'))) {
+            throw new Exception("Invalid invoice type: {$invoiceType}");
+        }
+
+        // Validate transaction type
+        if (!array_key_exists($transactionType, config('zra.transaction_types'))) {
+            throw new Exception("Invalid transaction type: {$transactionType}");
+        }
+
+        // Add invoice type and transaction type to stock data
+        $stockData['invoice_type'] = $invoiceType;
+        $stockData['transaction_type'] = $transactionType;
 
         if ($queue) {
             // Dispatch job to queue
             \Mak8Tech\ZraSmartInvoice\Jobs\ProcessZraTransaction::dispatch('stock', $stockData);
-            
+
             return [
                 'success' => true,
                 'message' => 'Stock data queued for processing',
@@ -437,11 +497,11 @@ class ZraService
         $totalCount = ZraTransactionLog::count();
         $successCount = ZraTransactionLog::where('status', 'success')->count();
         $failedCount = ZraTransactionLog::where('status', 'failed')->count();
-        
+
         $successRate = $totalCount > 0 ? round(($successCount / $totalCount) * 100, 1) : 0;
-        
+
         $lastTransaction = ZraTransactionLog::latest()->first();
-        
+
         return [
             'total_transactions' => $totalCount,
             'successful_transactions' => $successCount,
@@ -465,15 +525,15 @@ class ZraService
                 'status' => 'not_initialized',
             ];
         }
-        
+
         try {
             // Try to make a ping or simple API call to check if the connection works
             $baseUrl = config('zra.base_url');
             $client = new Client(['timeout' => 5]);
             $response = $client->request('GET', $baseUrl, ['http_errors' => false]);
-            
+
             $statusCode = $response->getStatusCode();
-            
+
             if ($statusCode >= 200 && $statusCode < 500) {
                 return [
                     'success' => true,

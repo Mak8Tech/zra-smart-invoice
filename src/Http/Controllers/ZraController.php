@@ -164,6 +164,10 @@ class ZraController extends Controller
                 ];
             }
 
+            // Get invoice and transaction types from request or use defaults
+            $invoiceType = $request->input('invoice_type', config('zra.default_invoice_type'));
+            $transactionType = $request->input('transaction_type', config('zra.default_transaction_type'));
+
             // Sample sales data
             $salesData = [
                 'invoiceNumber' => 'INV-' . mt_rand(1000, 9999),
@@ -184,13 +188,17 @@ class ZraController extends Controller
                 'customerTpin' => '',  // Optional for customer without TPIN
             ];
 
-            $result = $this->zraService->sendSalesData($salesData);
+            $result = $this->zraService->sendSalesData($salesData, $invoiceType, $transactionType);
 
             return [
                 'success' => $result['success'],
-                'message' => $result['success'] ? 'Test sales data sent successfully' : ($result['error'] ?? 'Failed to send test sales data'),
+                'message' => $result['success']
+                    ? 'Test sales data sent successfully with invoice type: ' . $invoiceType . ' and transaction type: ' . $transactionType
+                    : ($result['error'] ?? 'Failed to send test sales data'),
                 'reference' => $result['reference'] ?? null,
                 'data' => $result['data'] ?? null,
+                'invoice_type' => $invoiceType,
+                'transaction_type' => $transactionType,
             ];
         } catch (Exception $e) {
             Log::error('ZRA test sales submission failed', [
@@ -238,7 +246,7 @@ class ZraController extends Controller
         try {
             $type = $request->input('type');
             $data = $request->input('data', []);
-            
+
             // Validate transaction type
             if (!in_array($type, ['sales', 'purchase', 'stock'])) {
                 return [
@@ -246,7 +254,7 @@ class ZraController extends Controller
                     'message' => 'Invalid transaction type. Must be one of: sales, purchase, stock',
                 ];
             }
-            
+
             // Ensure device is initialized
             if (!$this->zraService->isInitialized()) {
                 return [
@@ -254,22 +262,22 @@ class ZraController extends Controller
                     'message' => 'Device not initialized. Please initialize the device first.',
                 ];
             }
-            
+
             // Process the transaction in the queue based on type
             switch ($type) {
                 case 'sales':
                     $result = $this->zraService->sendSalesData($data, true);
                     break;
-                
+
                 case 'purchase':
                     $result = $this->zraService->sendPurchaseData($data, true);
                     break;
-                
+
                 case 'stock':
                     $result = $this->zraService->sendStockData($data, true);
                     break;
             }
-            
+
             return [
                 'success' => true,
                 'message' => ucfirst($type) . ' data has been queued for processing',
@@ -280,7 +288,7 @@ class ZraController extends Controller
                 'error' => $e->getMessage(),
                 'type' => $request->input('type'),
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
