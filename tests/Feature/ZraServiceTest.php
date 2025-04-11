@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
 use Mak8Tech\ZraSmartInvoice\Models\ZraTransactionLog;
@@ -17,8 +16,6 @@ use ReflectionClass;
 
 class ZraServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     protected ZraService $zraService;
     protected MockHandler $mockHandler;
 

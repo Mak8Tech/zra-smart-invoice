@@ -2,15 +2,17 @@
 
 namespace Mak8Tech\ZraSmartInvoice\Tests;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mak8Tech\ZraSmartInvoice\ZraServiceProvider;
+use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class TestCase extends Orchestra
 {
-    use RefreshDatabase;
+    // Using DatabaseTransactions instead of RefreshDatabase to prevent migration issues
+    use DatabaseTransactions;
 
     /**
      * Setup the test environment.
@@ -19,8 +21,22 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
-        // Create database tables directly for testing
+        // Create database tables directly for testing, no longer relying on migrations
         $this->createTestTables();
+
+        // Create a default ZraConfig entry to prevent "no such table" errors
+        ZraConfig::create([
+            'tpin' => '1234567890',
+            'branch_id' => '001',
+            'device_serial' => 'TEST123456',
+            'environment' => 'sandbox',
+            'api_key' => null,
+            'last_initialized_at' => null,
+            'is_active' => false,
+            'additional_config' => json_encode([
+                'device_id' => null
+            ])
+        ]);
     }
 
     /**
@@ -77,31 +93,44 @@ class TestCase extends Orchestra
         // Create ZRA inventory table
         Schema::create('zra_inventory', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique()->comment('Product code');
+            $table->string('sku', 64)->unique()->comment('Stock Keeping Unit - unique identifier for the product');
             $table->string('name')->comment('Product name');
-            $table->string('description')->nullable()->comment('Product description');
-            $table->decimal('unit_price', 15, 2)->comment('Unit price');
-            $table->decimal('tax_rate', 8, 2)->default(0)->comment('Tax rate percentage');
-            $table->string('tax_category')->default('VAT')->comment('Tax category');
-            $table->integer('stock_quantity')->default(0)->comment('Current stock quantity');
+            $table->text('description')->nullable()->comment('Product description');
+            $table->string('category')->nullable()->comment('Product category');
+            $table->decimal('unit_price', 10, 2)->default(0)->comment('Base unit price without tax');
+            $table->string('tax_category')->default('VAT')->comment('Tax category (VAT, ZERO_RATED, EXEMPT, etc.)');
+            $table->decimal('tax_rate', 5, 2)->default(16.00)->comment('Current tax rate percentage');
+            $table->string('unit_of_measure', 20)->default('EACH')->comment('Unit of measure (EACH, KG, LITER, etc.)');
+            $table->integer('current_stock')->default(0)->comment('Current stock quantity');
+            $table->integer('reorder_level')->default(10)->comment('Stock level that triggers reordering');
+            $table->boolean('track_inventory')->default(true)->comment('Whether to track inventory for this item');
+            $table->boolean('active')->default(true)->comment('Whether the product is active and can be sold');
             $table->timestamps();
+            $table->softDeletes();
 
-            $table->index('code');
+            // Add indexes for common queries
+            $table->index('sku');
+            $table->index('name');
+            $table->index('category');
             $table->index('tax_category');
+            $table->index('active');
         });
 
-        // Create ZRA inventory movements table
         Schema::create('zra_inventory_movements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('inventory_id')->comment('Foreign key to zra_inventory table');
-            $table->string('movement_type')->comment('Type: PURCHASE, SALE, ADJUSTMENT, etc.');
-            $table->integer('quantity')->comment('Quantity changed (positive for in, negative for out)');
-            $table->string('reference')->nullable()->comment('Reference document');
-            $table->text('notes')->nullable()->comment('Additional notes');
+            $table->foreignId('inventory_id')->constrained('zra_inventory')->onDelete('cascade');
+            $table->string('reference')->comment('Reference number (invoice, purchase order, etc.)');
+            $table->string('movement_type')->comment('Type of movement (SALE, PURCHASE, ADJUSTMENT, RETURN, etc.)');
+            $table->integer('quantity')->comment('Quantity moved (positive for in, negative for out)');
+            $table->decimal('unit_price', 10, 2)->comment('Unit price at the time of movement');
+            $table->json('metadata')->nullable()->comment('Additional information about the movement');
+            $table->string('notes')->nullable()->comment('Notes about this movement');
             $table->timestamps();
 
-            $table->index('movement_type');
+            // Add indexes for common queries
             $table->index('reference');
+            $table->index('movement_type');
+            $table->index('created_at');
         });
     }
 

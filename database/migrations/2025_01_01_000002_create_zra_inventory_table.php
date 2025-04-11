@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateZraInventoryTable extends Migration
 {
     /**
      * Run the migrations.
@@ -62,4 +62,4 @@ return new class extends Migration
         Schema::dropIfExists('zra_inventory_movements');
         Schema::dropIfExists('zra_inventory');
     }
-};
+}

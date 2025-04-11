@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed database migration loading in test environment
+  - Added proper timestamps to migration filenames
+  - Updated migration classes to use named classes instead of anonymous classes
+  - Enhanced TestCase to properly publish and run migrations during tests
+  - Modified ZraServiceProvider to handle migrations in testing environment
 - Improved ServiceProvider migration publishing
 - Updated PHPUnit configuration for proper test database connection
 

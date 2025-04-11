@@ -6,6 +6,7 @@ use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
 use Mak8Tech\ZraSmartInvoice\Services\ZraService;
 use Mak8Tech\ZraSmartInvoice\Tests\TestCase;
 use Mockery;
+use Illuminate\Support\Carbon;
 
 class ZraServiceTest extends TestCase
 {
@@ -41,17 +42,16 @@ class ZraServiceTest extends TestCase
 
     public function testCanSendSalesData()
     {
-        // Create a mock of ZraConfig that will be returned by the static method
-        $configMock = Mockery::mock('overload:' . ZraConfig::class);
-        $configMock->shouldReceive('getActive')
-            ->andReturn((object)[
-                'tpin' => '1234567890',
-                'branch_id' => '001',
-                'device_serial' => 'DEVICE123456',
-                'api_key' => 'test_api_key',
-                'last_initialized_at' => now(),
-                'is_active' => true,
-            ]);
+        // Create the config directly instead of mocking the model class
+        $config = ZraConfig::create([
+            'tpin' => '1234567890',
+            'branch_id' => '001',
+            'device_serial' => 'TEST_DEVICE_123',
+            'api_key' => 'test_api_key',
+            'last_initialized_at' => Carbon::now(),
+            'is_active' => true,
+            'additional_config' => json_encode(['device_id' => 'TEST_DEVICE_ID'])
+        ]);
 
         // Mock the service
         $mock = Mockery::mock(ZraService::class);
@@ -85,17 +85,16 @@ class ZraServiceTest extends TestCase
 
     public function testCanHandleInvoiceTypes()
     {
-        // Create a mock of ZraConfig that will be returned by the static method
-        $configMock = Mockery::mock('overload:' . ZraConfig::class);
-        $configMock->shouldReceive('getActive')
-            ->andReturn((object)[
-                'tpin' => '1234567890',
-                'branch_id' => '001',
-                'device_serial' => 'DEVICE123456',
-                'api_key' => 'test_api_key',
-                'last_initialized_at' => now(),
-                'is_active' => true,
-            ]);
+        // Create the config directly instead of mocking the model class
+        $config = ZraConfig::create([
+            'tpin' => '9876543210',
+            'branch_id' => '002',
+            'device_serial' => 'TEST_DEVICE_456',
+            'api_key' => 'test_api_key2',
+            'last_initialized_at' => Carbon::now(),
+            'is_active' => true,
+            'additional_config' => json_encode(['device_id' => 'TEST_DEVICE_ID2'])
+        ]);
 
         // Mock the service
         $mock = Mockery::mock(ZraService::class);

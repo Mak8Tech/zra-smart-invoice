@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateZraConfigsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamp('last_sync_at')->nullable()->comment('Last successful data sync timestamp');
             $table->json('additional_config')->nullable()->comment('Additional configuration as JSON');
             $table->timestamps();
-            
+
             // Add indexes directly during table creation
             $table->index('tpin');
             $table->index('branch_id');
@@ -45,7 +45,7 @@ return new class extends Migration
             $table->string('status')->comment('Status: success, failed');
             $table->string('error_message')->nullable()->comment('Error message if any');
             $table->timestamps();
-            
+
             // Add indexes directly during table creation
             $table->index('transaction_type');
             $table->index('reference');
@@ -64,4 +64,4 @@ return new class extends Migration
         Schema::dropIfExists('zra_transaction_logs');
         Schema::dropIfExists('zra_configs');
     }
-};
+}

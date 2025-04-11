@@ -31,6 +31,17 @@ class ZraServiceProvider extends ServiceProvider
             __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'zra-migrations');
 
+        // Register migration files explicitly if in testing environment
+        if ($this->app->runningUnitTests()) {
+            $this->publishes([
+                __DIR__ . '/../database/migrations/' => database_path('migrations'),
+            ], 'testing-migrations');
+
+            $this->publishes([
+                __DIR__ . '/../database/migrations/' => database_path('migrations'),
+            ]);
+        }
+
         // Publish configuration
         $this->publishes([
             __DIR__ . '/../config/zra.php' => config_path('zra.php'),
