@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance Optimization (REQ-009)
 - Error Handling and Logging (REQ-010)
 
+### Fixed
+
+- Fixed database migration loading in test environment
+- Improved ServiceProvider migration publishing
+- Updated PHPUnit configuration for proper test database connection
+
 ## [1.0.1] - 2025-04-10
 
 ### Added

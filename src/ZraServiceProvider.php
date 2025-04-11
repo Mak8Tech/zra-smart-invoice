@@ -23,8 +23,13 @@ class ZraServiceProvider extends ServiceProvider
         // Load package routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
-        // Load migrations
+        // Load migrations - use absolute paths to ensure they're found
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        // Publish migrations to allow customization
+        $this->publishes([
+            __DIR__ . '/../database/migrations/' => database_path('migrations'),
+        ], 'zra-migrations');
 
         // Publish configuration
         $this->publishes([
