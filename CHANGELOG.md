@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Inventory Management Integration (REQ-004)**:
+  - Created ZraInventoryService for inventory tracking and management
+  - Implemented database migrations for inventory and inventory movements tables
+  - Added ZraInventory and ZraInventoryMovement models with relationships
+  - Created comprehensive React component for inventory management UI
+  - Added product management functionality (create, update, delete)
+  - Implemented stock level tracking and validation
+  - Added stock movement history and reporting
+  - Integrated inventory validation with sales transactions
+
 ## [1.0.1] - 2025-03-16
 
 ### Added

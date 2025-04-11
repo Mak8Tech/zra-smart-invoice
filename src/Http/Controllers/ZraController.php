@@ -61,6 +61,7 @@ class ZraController extends Controller
             'is_initialized' => $this->zraService->isInitialized(),
             'environment' => config('zra.base_url') === 'https://api-sandbox.zra.org.zm/vsdc-api/v1' ? 'sandbox' : 'production',
             'stats' => $stats,
+            'api_url' => route('zra.api'),
         ]);
     }
 

@@ -5,6 +5,7 @@ import ConfigForm from "./components/ConfigForm";
 import StatusIndicator from "./components/StatusIndicator";
 import TransactionLog from "./components/TransactionLog";
 import DashboardWidget from "./components/DashboardWidget";
+import Inventory from "./components/Inventory";
 
 interface ZraConfig {
   id: number;
@@ -44,6 +45,7 @@ interface Props {
   is_initialized: boolean;
   environment: string;
   stats: Stats;
+  api_url: string;
 }
 
 export default function Index({
@@ -52,8 +54,11 @@ export default function Index({
   is_initialized,
   environment,
   stats,
+  api_url,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "config" | "logs">("dashboard");
+  const [activeTab, setActiveTab] = useState<
+    "dashboard" | "config" | "logs" | "inventory"
+  >("dashboard");
 
   return (
     <>
@@ -106,6 +111,16 @@ export default function Index({
                   >
                     Transaction Logs
                   </button>
+                  <button
+                    onClick={() => setActiveTab("inventory")}
+                    className={`${
+                      activeTab === "inventory"
+                        ? "border-indigo-500 text-indigo-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  >
+                    Inventory
+                  </button>
                 </nav>
               </div>
 
@@ -117,9 +132,9 @@ export default function Index({
                 <ConfigForm config={config} isInitialized={is_initialized} />
               )}
 
-              {activeTab === "logs" && (
-                <TransactionLog logs={logs} />
-              )}
+              {activeTab === "logs" && <TransactionLog logs={logs} />}
+
+              {activeTab === "inventory" && <Inventory apiUrl={api_url} />}
             </div>
           </div>
         </div>
