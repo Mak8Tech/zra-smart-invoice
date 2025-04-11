@@ -9,17 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Inventory Management Integration (REQ-004)**:
-  - Created ZraInventoryService for inventory tracking and management
-  - Implemented database migrations for inventory and inventory movements tables
-  - Added ZraInventory and ZraInventoryMovement models with relationships
-  - Created comprehensive React component for inventory management UI
-  - Added product management functionality (create, update, delete)
-  - Implemented stock level tracking and validation
-  - Added stock movement history and reporting
-  - Integrated inventory validation with sales transactions
+- Security Enhancements (REQ-005)
+- User Interface Improvements (REQ-006)
+- Documentation (REQ-007)
+- Testing (REQ-008)
+- Performance Optimization (REQ-009)
+- Error Handling and Logging (REQ-010)
 
-## [1.0.1] - 2025-03-16
+## [1.0.1] - 2023-12-06
 
 ### Added
 
@@ -41,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented tax summary display in test results
 
 - **Report Generation (X and Z Reports) (REQ-003)**:
+
   - Added ZraReportCommand for generating reports via CLI
   - Created ZraReportService for generating X, Z, daily, and monthly reports
   - Enhanced DashboardWidget with report generation UI
@@ -48,7 +46,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented report export in various formats (JSON, text)
   - Added support for saving reports to disk
 
-## [1.0.0] - 2025-03-15
+- **Inventory Management Integration (REQ-004)**:
+  - Created ZraInventoryService for inventory tracking and management
+  - Implemented database migrations for inventory and inventory movements tables
+  - Added ZraInventory and ZraInventoryMovement models with relationships
+  - Created comprehensive React component for inventory management UI
+  - Added product management functionality (create, update, delete)
+  - Implemented stock level tracking and validation
+  - Added stock movement history and reporting
+  - Integrated inventory validation with sales transactions
+
+## [1.0.0] - 2023-12-01
 
 ### Added
 

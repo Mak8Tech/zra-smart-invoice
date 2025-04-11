@@ -2,6 +2,76 @@
 
 This document provides step-by-step instructions for upgrading ZRA Smart Invoice between versions.
 
+## Upgrading from 1.0.0 to 1.0.1
+
+Version 1.0.1 includes major new features such as support for various invoice types, comprehensive tax handling, report generation, and inventory management.
+
+### Prerequisites
+
+- PHP 8.2 or higher
+- Laravel 12.0 or higher
+- Composer 2.0 or higher
+- npm 8.0 or higher
+- Node.js 16.0 or higher
+
+### Step 1: Update your dependencies
+
+Update your composer.json file to require the new version:
+
+```bash
+composer require mak8tech/zra-smart-invoice:^1.0.1
+```
+
+### Step 2: Publish the new migrations
+
+The new version includes inventory management tables. Publish and run the new migrations:
+
+```bash
+php artisan vendor:publish --tag=zra-migrations
+php artisan migrate
+```
+
+### Step 3: Update your configuration
+
+Publish the updated configuration to access new features:
+
+```bash
+php artisan vendor:publish --tag=zra-config --force
+```
+
+Review the updated configuration file and set new options as needed, especially:
+
+- Invoice and transaction type settings
+- Tax categories configuration
+- Report generation options
+- Inventory management settings
+
+### Step 4: Publish updated assets
+
+```bash
+php artisan vendor:publish --tag=zra-assets --force
+```
+
+### Step 5: Install frontend dependencies (if there are updates)
+
+```bash
+npm install
+```
+
+### Step 6: Build frontend assets
+
+```bash
+npm run build
+```
+
+### Step 7: Clear caches
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
 ## Installing Version 1.0.0
 
 This is the initial version of ZRA Smart Invoice. Follow these installation steps to get started.

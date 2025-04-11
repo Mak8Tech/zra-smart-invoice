@@ -18,6 +18,17 @@ A Laravel 12 package for integrating with the Zambia Revenue Authority (ZRA) Sma
 - Transaction logging and monitoring
 - Configuration management
 - Status indicators and analytics
+- Support for various invoice types (NORMAL, COPY, TRAINING, PROFORMA) and transaction types
+- Comprehensive tax handling with support for multiple tax categories
+- Report generation (X and Z Reports)
+- Inventory management with stock tracking and validation
+
+## What's New in 1.0.1
+
+- **Support for Various Invoice Types**: Added configuration options for different invoice and transaction types
+- **Comprehensive Tax Handling**: Support for multiple tax categories, zero-rated and exempt transactions
+- **Report Generation**: X and Z reports for auditing and compliance purposes
+- **Inventory Management**: Complete inventory tracking system with stock validation during sales
 
 ## Installation
 
@@ -71,6 +82,8 @@ use Mak8Tech\ZraSmartInvoice\Facades\Zra;
 $salesData = [
     'invoiceNumber' => 'INV-1234',
     'timestamp' => now()->format('Y-m-d H:i:s'),
+    'invoiceType' => 'NORMAL', // Can also be COPY, TRAINING, PROFORMA
+    'transactionType' => 'SALE', // Can also be CREDIT_NOTE, DEBIT_NOTE, ADJUSTMENT, REFUND
     'items' => [
         [
             'name' => 'Product 1',
@@ -79,6 +92,7 @@ $salesData = [
             'totalAmount' => 200.00,
             'taxRate' => 16,
             'taxAmount' => 32.00,
+            'taxCategory' => 'VAT', // Can also be TOURISM_LEVY, EXCISE_DUTY, etc.
         ],
     ],
     'totalAmount' => 200.00,
@@ -91,6 +105,44 @@ $salesData = [
 $result = Zra::sendSalesData($salesData);
 ```
 
+### Generating Reports
+
+```php
+use Mak8Tech\ZraSmartInvoice\Facades\Zra;
+
+// Generate X report (interim report)
+$xReport = Zra::generateXReport();
+
+// Generate Z report (end of day report)
+$zReport = Zra::generateZReport();
+
+// Get daily summary report
+$dailyReport = Zra::getDailyReport('2023-12-05');
+```
+
+### Managing Inventory
+
+```php
+use Mak8Tech\ZraSmartInvoice\Facades\Zra;
+
+// Add new product to inventory
+$product = Zra::addInventoryProduct([
+    'code' => 'PROD001',
+    'name' => 'Product Name',
+    'description' => 'Product Description',
+    'unitPrice' => 100.00,
+    'taxRate' => 16,
+    'taxCategory' => 'VAT',
+    'initialStock' => 50
+]);
+
+// Update stock quantity
+Zra::updateStockQuantity('PROD001', 60, 'STOCK_ADJUSTMENT', 'Inventory count adjustment');
+
+// Check if product has sufficient stock
+$hasStock = Zra::checkProductStock('PROD001', 5); // Returns true if at least 5 units available
+```
+
 ## Web Interface
 
 The package includes a web interface accessible at `/zra` (configurable) where you can:
@@ -99,6 +151,8 @@ The package includes a web interface accessible at `/zra` (configurable) where y
 - View device status
 - Test connectivity
 - View transaction logs
+- Generate X and Z reports
+- Manage inventory and stock levels
 
 ## Testing
 
