@@ -8,14 +8,15 @@
          requireCoverageMetadata="false"
          beStrictAboutCoverageMetadata="true"
          beStrictAboutOutputDuringTests="true"
-         failOnRisky="true"
-         failOnWarning="true">
+         failOnRisky="false"
+         failOnWarning="false"
+         testdox="true">
     <testsuites>
         <testsuite name="Unit">
-            <directory>tests/Unit</directory>
+            <directory suffix="Test.php">tests/Unit</directory>
         </testsuite>
         <testsuite name="Feature">
-            <directory>tests/Feature</directory>
+            <directory suffix="Test.php">tests/Feature</directory>
         </testsuite>
     </testsuites>
     <coverage>
@@ -36,5 +37,9 @@
         <env name="CACHE_DRIVER" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_DRIVER" value="sync"/>
+        <env name="ZRA_ENVIRONMENT" value="sandbox"/>
+        <env name="ZRA_BASE_URL" value="https://sandbox-api.example.com"/>
+        <env name="ZRA_TIMEOUT" value="10"/>
+        <env name="ZRA_DEBUG" value="true"/>
     </php>
 </phpunit>

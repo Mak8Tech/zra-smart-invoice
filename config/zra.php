@@ -43,6 +43,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Security Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for digital signatures, encryption and security middleware.
+    | These settings help secure communications with the ZRA API.
+    |
+    */
+
+    // Digital signatures configuration
+    'use_digital_signatures' => env('ZRA_USE_DIGITAL_SIGNATURES', false),
+    'private_key_path' => env('ZRA_PRIVATE_KEY_PATH', storage_path('app/zra/private.key')),
+    'certificate_path' => env('ZRA_CERTIFICATE_PATH', storage_path('app/zra/certificate.crt')),
+
+    // Security middleware configuration
+    'force_secure' => env('ZRA_FORCE_SECURE', true),
+    'redirect_to_https' => env('ZRA_REDIRECT_TO_HTTPS', true),
+    'add_security_headers' => env('ZRA_ADD_SECURITY_HEADERS', true),
+    'min_tls_version' => env('ZRA_MIN_TLS_VERSION', '1.2'),
+
+    // List of admin emails that are allowed to access ZRA functionality
+    'admin_emails' => env('ZRA_ADMIN_EMAILS', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Invoice Types Configuration
     |--------------------------------------------------------------------------
     |

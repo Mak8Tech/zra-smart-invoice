@@ -117,7 +117,7 @@ $xReport = Zra::generateXReport();
 $zReport = Zra::generateZReport();
 
 // Get daily summary report
-$dailyReport = Zra::getDailyReport('2023-12-05');
+$dailyReport = Zra::getDailyReport('2025-04-11');
 ```
 
 ### Managing Inventory

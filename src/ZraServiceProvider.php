@@ -3,8 +3,12 @@
 namespace Mak8Tech\ZraSmartInvoice;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Routing\Router;
 use Mak8Tech\ZraSmartInvoice\Console\Commands\ZraHealthCheckCommand;
 use Mak8Tech\ZraSmartInvoice\Console\Commands\ZraReportCommand;
+use Mak8Tech\ZraSmartInvoice\Http\Middleware\ZraRoleMiddleware;
+use Mak8Tech\ZraSmartInvoice\Http\Middleware\ZraRateLimitMiddleware;
+use Mak8Tech\ZraSmartInvoice\Http\Middleware\ZraSecurityMiddleware;
 use Mak8Tech\ZraSmartInvoice\Services\ZraReportService;
 use Mak8Tech\ZraSmartInvoice\Services\ZraService;
 use Mak8Tech\ZraSmartInvoice\Services\ZraTaxService;
@@ -31,6 +35,12 @@ class ZraServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/js' => resource_path('js/vendor/mak8tech/zra-smart-invoice'),
         ], 'inertia-components');
+
+        // Register middleware
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('zra.role', ZraRoleMiddleware::class);
+        $router->aliasMiddleware('zra.ratelimit', ZraRateLimitMiddleware::class);
+        $router->aliasMiddleware('zra.security', ZraSecurityMiddleware::class);
 
         // Register commands
         if ($this->app->runningInConsole()) {

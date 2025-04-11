@@ -29,6 +29,16 @@ class ZraService
     protected $taxService;
 
     /**
+     * @var string|null
+     */
+    protected $privateKeyPath;
+
+    /**
+     * @var string|null
+     */
+    protected $certificatePath;
+
+    /**
      * Constructor
      */
     public function __construct()
@@ -36,10 +46,18 @@ class ZraService
         $this->config = ZraConfig::getActive();
         $this->taxService = new ZraTaxService();
 
+        // Set up paths for digital signature
+        $this->privateKeyPath = config('zra.private_key_path');
+        $this->certificatePath = config('zra.certificate_path');
+
         $this->httpClient = new Client([
             'base_uri' => config('zra.base_url'),
             'timeout' => config('zra.timeout'),
             'http_errors' => false,
+            // Force TLS 1.2 or higher for security
+            'curl' => [
+                CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_2,
+            ],
         ]);
     }
 
@@ -314,21 +332,33 @@ class ZraService
      * @param string $endpoint
      * @param array $data
      * @return array
-     * @throws Exception
+     * @throws GuzzleException|Exception
      */
     protected function makeApiRequest(string $method, string $endpoint, array $data): array
     {
         $reference = uniqid('zra_', true);
         $options = ['json' => $data];
 
+        // Prepare headers
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ];
+
         // Add API key if we have it
         if ($this->config && $this->config->api_key) {
-            $options['headers'] = [
-                'X-API-KEY' => $this->config->api_key,
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ];
+            $headers['X-API-KEY'] = $this->config->api_key;
         }
+
+        // Add digital signature if enabled
+        if (config('zra.use_digital_signatures', false)) {
+            $signature = $this->createDigitalSignature($data);
+            if ($signature) {
+                $headers['X-ZRA-Signature'] = $signature;
+            }
+        }
+
+        $options['headers'] = $headers;
 
         try {
             // Log the request if enabled
@@ -368,7 +398,8 @@ class ZraService
             if ($statusCode >= 200 && $statusCode < 300) {
                 return [
                     'success' => true,
-                    'data' => $responseData,
+                    'message' => $responseData['message'] ?? 'Operation successful',
+                    'data' => $responseData['data'] ?? $responseData,
                     'reference' => $reference,
                 ];
             }
@@ -376,30 +407,36 @@ class ZraService
             // Handle errors
             return [
                 'success' => false,
-                'error' => $responseData['message'] ?? "HTTP Error: {$statusCode}",
-                'status_code' => $statusCode,
+                'message' => $responseData['message'] ?? 'API request failed',
+                'error' => $responseData['error'] ?? "HTTP Error: {$statusCode}",
                 'reference' => $reference,
             ];
         } catch (GuzzleException $e) {
-            // Create error log
-            $transactionType = $this->determineTransactionType($endpoint);
-            ZraTransactionLog::createLog(
-                $transactionType,
-                $reference,
-                $data,
-                null,
-                'failed',
-                $e->getMessage()
-            );
+            $errorMessage = $e->getMessage();
 
-            // Log error
-            Log::error("ZRA API Error [{$reference}]", [
-                'message' => $e->getMessage(),
+            // Log the error
+            Log::error("ZRA API Request Error [{$reference}]", [
                 'method' => $method,
                 'endpoint' => $endpoint,
+                'error' => $errorMessage,
             ]);
 
-            throw new Exception("ZRA API request failed: {$e->getMessage()}", 0, $e);
+            // Create failure log
+            ZraTransactionLog::createLog(
+                $transactionType ?? $this->determineTransactionType($endpoint),
+                $reference,
+                $data,
+                ['error' => $errorMessage],
+                'failed',
+                $errorMessage
+            );
+
+            return [
+                'success' => false,
+                'message' => 'API connection error',
+                'error' => $errorMessage,
+                'reference' => $reference,
+            ];
         }
     }
 
@@ -718,5 +755,169 @@ class ZraService
     public function generateMonthlyReport(?\Illuminate\Support\Carbon $date = null): array
     {
         return $this->generateReport('monthly', $date);
+    }
+
+    /**
+     * Create a digital signature for the provided data
+     *
+     * @param array $data The data to sign
+     * @return string|null The digital signature or null if signing failed
+     */
+    protected function createDigitalSignature(array $data): ?string
+    {
+        // Skip if digital signatures are not configured
+        if (!$this->isDigitalSignatureConfigured()) {
+            Log::warning('Digital signature requested but not configured. Define private_key_path in config/zra.php');
+            return null;
+        }
+
+        try {
+            // Convert data to a canonical JSON string (to ensure consistent signing)
+            $canonicalData = $this->canonicalizeData($data);
+
+            // Create signature
+            $privateKey = openssl_pkey_get_private('file://' . $this->privateKeyPath);
+            if ($privateKey === false) {
+                Log::error('Failed to load private key for digital signature', [
+                    'path' => $this->privateKeyPath,
+                    'error' => openssl_error_string(),
+                ]);
+                return null;
+            }
+
+            $signature = null;
+            if (!openssl_sign($canonicalData, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+                Log::error('Failed to create digital signature', [
+                    'error' => openssl_error_string(),
+                ]);
+                return null;
+            }
+
+            // Free the key from memory
+            openssl_free_key($privateKey);
+
+            // Return base64 encoded signature
+            return base64_encode($signature);
+        } catch (\Exception $e) {
+            Log::error('Exception while creating digital signature', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Verify a digital signature against provided data
+     *
+     * @param array $data The data to verify
+     * @param string $signature The signature to verify (base64 encoded)
+     * @return bool Whether the signature is valid
+     */
+    public function verifyDigitalSignature(array $data, string $signature): bool
+    {
+        // Skip if digital signatures are not configured
+        if (!$this->isDigitalSignatureConfigured()) {
+            Log::warning('Digital signature verification requested but not configured');
+            return false;
+        }
+
+        try {
+            // Convert data to a canonical JSON string (same as during signing)
+            $canonicalData = $this->canonicalizeData($data);
+
+            // Decode the base64 signature
+            $binarySignature = base64_decode($signature);
+            if ($binarySignature === false) {
+                Log::error('Failed to decode base64 signature');
+                return false;
+            }
+
+            // Get the certificate
+            $certificate = openssl_x509_read('file://' . $this->certificatePath);
+            if ($certificate === false) {
+                Log::error('Failed to load certificate for signature verification', [
+                    'path' => $this->certificatePath,
+                    'error' => openssl_error_string(),
+                ]);
+                return false;
+            }
+
+            // Get public key from certificate
+            $publicKey = openssl_pkey_get_public($certificate);
+            if ($publicKey === false) {
+                Log::error('Failed to extract public key from certificate', [
+                    'error' => openssl_error_string(),
+                ]);
+                return false;
+            }
+
+            // Verify signature
+            $result = openssl_verify($canonicalData, $binarySignature, $publicKey, OPENSSL_ALGO_SHA256);
+
+            // Free resources
+            openssl_free_key($publicKey);
+
+            // Check result
+            if ($result === 1) {
+                return true;
+            } elseif ($result === 0) {
+                Log::warning('Digital signature verification failed - invalid signature');
+                return false;
+            } else {
+                Log::error('Error during signature verification', [
+                    'error' => openssl_error_string(),
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception while verifying digital signature', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Check if digital signature is configured
+     *
+     * @return bool
+     */
+    protected function isDigitalSignatureConfigured(): bool
+    {
+        return !empty($this->privateKeyPath) &&
+            !empty($this->certificatePath) &&
+            file_exists($this->privateKeyPath) &&
+            file_exists($this->certificatePath);
+    }
+
+    /**
+     * Canonicalize data for consistent signing
+     *
+     * @param array $data
+     * @return string
+     */
+    protected function canonicalizeData(array $data): string
+    {
+        // Sort keys recursively and convert to JSON with no whitespace
+        $this->ksortRecursive($data);
+        return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Sort array keys recursively
+     *
+     * @param array &$array
+     * @return void
+     */
+    protected function ksortRecursive(array &$array): void
+    {
+        ksort($array);
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                $this->ksortRecursive($value);
+            }
+        }
     }
 }

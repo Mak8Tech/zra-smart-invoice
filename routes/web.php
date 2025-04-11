@@ -6,7 +6,7 @@ use Mak8Tech\ZraSmartInvoice\Http\Controllers\ZraInventoryController;
 use Mak8Tech\ZraSmartInvoice\Http\Controllers\ZraTaxController;
 
 Route::prefix(config('zra.routes.prefix', 'zra'))
-    ->middleware(config('zra.routes.middleware', ['web', 'auth']))
+    ->middleware(array_merge(config('zra.routes.middleware', ['web', 'auth']), ['zra.security']))
     ->group(function () {
         Route::get('/', [ZraController::class, 'index'])->name('zra.index');
         Route::post('/initialize', [ZraController::class, 'initialize'])->name('zra.initialize');
@@ -20,22 +20,25 @@ Route::prefix(config('zra.routes.prefix', 'zra'))
         Route::post('/queue-transaction', [ZraController::class, 'queueTransaction'])->name('zra.queue-transaction');
         Route::post('/report', [ZraController::class, 'generateReport'])->name('zra.generate-report');
 
-        // API prefix for AJAX requests
-        Route::prefix('api')->name('zra.api')->group(function () {
-            // Tax API routes
-            Route::get('/tax/categories', [ZraTaxController::class, 'categories'])->name('.tax.categories');
-            Route::post('/tax/calculate', [ZraTaxController::class, 'calculate'])->name('.tax.calculate');
+        // API prefix for AJAX requests - apply rate limiting middleware to protect API endpoints
+        Route::prefix('api')
+            ->middleware('zra.ratelimit:zra_api,120,1')
+            ->name('zra.api')
+            ->group(function () {
+                // Tax API routes
+                Route::get('/tax/categories', [ZraTaxController::class, 'categories'])->name('.tax.categories');
+                Route::post('/tax/calculate', [ZraTaxController::class, 'calculate'])->name('.tax.calculate');
 
-            // Inventory API routes
-            Route::post('/inventory/search', [ZraInventoryController::class, 'search'])->name('.inventory.search');
-            Route::get('/inventory/products', [ZraInventoryController::class, 'index'])->name('.inventory.index');
-            Route::post('/inventory/products', [ZraInventoryController::class, 'store'])->name('.inventory.store');
-            Route::get('/inventory/products/{id}', [ZraInventoryController::class, 'show'])->name('.inventory.show');
-            Route::put('/inventory/products/{id}', [ZraInventoryController::class, 'update'])->name('.inventory.update');
-            Route::delete('/inventory/products/{id}', [ZraInventoryController::class, 'destroy'])->name('.inventory.destroy');
-            Route::post('/inventory/products/{id}/adjust', [ZraInventoryController::class, 'adjustStock'])->name('.inventory.adjust');
-            Route::get('/inventory/products/{id}/movements', [ZraInventoryController::class, 'movements'])->name('.inventory.movements');
-            Route::get('/inventory/low-stock', [ZraInventoryController::class, 'lowStock'])->name('.inventory.low-stock');
-            Route::get('/inventory/reports/{type}', [ZraInventoryController::class, 'generateReport'])->name('.inventory.report');
-        });
+                // Inventory API routes
+                Route::post('/inventory/search', [ZraInventoryController::class, 'search'])->name('.inventory.search');
+                Route::get('/inventory/products', [ZraInventoryController::class, 'index'])->name('.inventory.index');
+                Route::post('/inventory/products', [ZraInventoryController::class, 'store'])->name('.inventory.store');
+                Route::get('/inventory/products/{id}', [ZraInventoryController::class, 'show'])->name('.inventory.show');
+                Route::put('/inventory/products/{id}', [ZraInventoryController::class, 'update'])->name('.inventory.update');
+                Route::delete('/inventory/products/{id}', [ZraInventoryController::class, 'destroy'])->name('.inventory.destroy');
+                Route::post('/inventory/products/{id}/adjust', [ZraInventoryController::class, 'adjustStock'])->name('.inventory.adjust');
+                Route::get('/inventory/products/{id}/movements', [ZraInventoryController::class, 'movements'])->name('.inventory.movements');
+                Route::get('/inventory/low-stock', [ZraInventoryController::class, 'lowStock'])->name('.inventory.low-stock');
+                Route::get('/inventory/reports/{type}', [ZraInventoryController::class, 'generateReport'])->name('.inventory.report');
+            });
     });

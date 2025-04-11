@@ -16,9 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance Optimization (REQ-009)
 - Error Handling and Logging (REQ-010)
 
-## [1.0.1] - 2023-12-06
+## [1.0.1] - 2025-04-10
 
 ### Added
+
+- **Security Enhancements (REQ-005)**:
+
+  - Added `ZraSecurityMiddleware` to enforce HTTPS connections and TLS 1.2+ in production
+  - Implemented digital signature creation and verification in ZraService
+  - Added security headers to API responses
+  - Enhanced client configuration to enforce TLS 1.2 minimum
+  - Added configuration options for digital signatures in config/zra.php
+  - Created secure canonicalization of data for consistent signature generation
 
 - **Support for Various Invoice Types (REQ-001)**:
 
@@ -56,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added stock movement history and reporting
   - Integrated inventory validation with sales transactions
 
-## [1.0.0] - 2023-12-01
+## [1.0.0] - 2025-03-15
 
 ### Added
 

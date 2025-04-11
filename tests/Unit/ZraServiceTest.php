@@ -12,12 +12,9 @@ class ZraServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Make sure we have a clean database state before each test
-        $this->artisan('migrate:fresh');
     }
-    
-    public function testDeviceInitialization()
+
+    public function testCanInitializeDevice()
     {
         // Mock the ZraService to control its behavior
         $mock = Mockery::mock(ZraService::class);
@@ -32,9 +29,9 @@ class ZraServiceTest extends TestCase
                 ],
                 'reference' => 'zra_test_reference',
             ]);
-        
+
         $this->app->instance(ZraService::class, $mock);
-        
+
         $service = $this->app->make(ZraService::class);
         $result = $service->initializeDevice('1234567890', '001', 'DEVICE123456');
 
@@ -42,16 +39,19 @@ class ZraServiceTest extends TestCase
         $this->assertEquals('test_api_key', $result['data']['api_key']);
     }
 
-    public function testSendSalesData()
+    public function testCanSendSalesData()
     {
-        // Create a config for testing
-        ZraConfig::create([
-            'tpin' => '1234567890',
-            'branch_id' => '001',
-            'device_serial' => 'DEVICE123456',
-            'api_key' => 'test_api_key',
-            'last_initialized_at' => now(),
-        ]);
+        // Create a mock of ZraConfig that will be returned by the static method
+        $configMock = Mockery::mock('overload:' . ZraConfig::class);
+        $configMock->shouldReceive('getActive')
+            ->andReturn((object)[
+                'tpin' => '1234567890',
+                'branch_id' => '001',
+                'device_serial' => 'DEVICE123456',
+                'api_key' => 'test_api_key',
+                'last_initialized_at' => now(),
+                'is_active' => true,
+            ]);
 
         // Mock the service
         $mock = Mockery::mock(ZraService::class);
@@ -62,9 +62,9 @@ class ZraServiceTest extends TestCase
                 'message' => 'Sales data submitted successfully',
                 'reference' => 'test_reference',
             ]);
-            
+
         $this->app->instance(ZraService::class, $mock);
-        
+
         $service = $this->app->make(ZraService::class);
         $result = $service->sendSalesData([
             'invoice_number' => 'INV-12345',
@@ -82,7 +82,59 @@ class ZraServiceTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertEquals('Sales data submitted successfully', $result['message']);
     }
-    
+
+    public function testCanHandleInvoiceTypes()
+    {
+        // Create a mock of ZraConfig that will be returned by the static method
+        $configMock = Mockery::mock('overload:' . ZraConfig::class);
+        $configMock->shouldReceive('getActive')
+            ->andReturn((object)[
+                'tpin' => '1234567890',
+                'branch_id' => '001',
+                'device_serial' => 'DEVICE123456',
+                'api_key' => 'test_api_key',
+                'last_initialized_at' => now(),
+                'is_active' => true,
+            ]);
+
+        // Mock the service
+        $mock = Mockery::mock(ZraService::class);
+        $mock->shouldReceive('sendSalesData')
+            ->with(
+                Mockery::any(),
+                'NORMAL',  // Invoice type
+                'SALE'     // Transaction type
+            )
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'message' => 'Sales data with invoice type submitted successfully',
+                'reference' => 'test_reference',
+            ]);
+
+        $this->app->instance(ZraService::class, $mock);
+
+        $service = $this->app->make(ZraService::class);
+        $result = $service->sendSalesData(
+            [
+                'invoice_number' => 'INV-12345',
+                'total_amount' => 1000.00,
+                'items' => [
+                    [
+                        'description' => 'Test Product',
+                        'quantity' => 2,
+                        'unit_price' => 500.00,
+                        'tax_rate' => 16,
+                    ]
+                ],
+            ],
+            'NORMAL',
+            'SALE'
+        );
+
+        $this->assertTrue($result['success']);
+    }
+
     protected function tearDown(): void
     {
         Mockery::close();

@@ -2,11 +2,25 @@
 
 namespace Mak8Tech\ZraSmartInvoice\Tests;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mak8Tech\ZraSmartInvoice\ZraServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
+    use RefreshDatabase;
+
+    /**
+     * Setup the test environment.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Create required tables for testing
+        $this->artisan('migrate', ['--database' => 'testing'])->run();
+    }
+
     /**
      * Get package providers.
      *
@@ -47,11 +61,32 @@ class TestCase extends Orchestra
         ]);
 
         // Set ZRA config
-        $app['config']->set('zra.environment', 'sandbox');
-        $app['config']->set('zra.endpoints.sandbox', [
-            'base_url' => 'https://sandbox-api.example.com',
-            'initialize' => '/api/v1/initialize',
-            'sales' => '/api/v1/sales',
+        $app['config']->set('zra.base_url', 'https://sandbox-api.example.com');
+        $app['config']->set('zra.timeout', 10);
+        $app['config']->set('zra.debug', true);
+        $app['config']->set('zra.log_requests', true);
+
+        // Set invoice and tax configuration
+        $app['config']->set('zra.invoice_types', [
+            'NORMAL' => 'Normal Invoice',
+            'COPY' => 'Copy of Invoice',
+            'TRAINING' => 'Training Invoice',
+            'PROFORMA' => 'Proforma Invoice',
+        ]);
+
+        $app['config']->set('zra.tax_categories', [
+            'VAT' => [
+                'name' => 'Value Added Tax',
+                'code' => 'VAT',
+                'default_rate' => 16.0,
+                'applies_to' => 'goods_and_services',
+            ],
+            'ZERO_RATED' => [
+                'name' => 'Zero Rated',
+                'code' => 'ZR',
+                'default_rate' => 0.0,
+                'applies_to' => 'zero_rated_goods',
+            ],
         ]);
     }
 }
