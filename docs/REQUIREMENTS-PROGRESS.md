@@ -8,7 +8,7 @@ This document tracks the implementation progress of requirements for ZRA Smart I
 | ------- | ----------------------------------- | ------------ | ----------------------- |
 | REQ-001 | Support for Various Invoice Types   | ✅ Completed | 1.0.1                   |
 | REQ-002 | Comprehensive Tax Handling          | ✅ Completed | 1.0.1                   |
-| REQ-003 | Report Generation (X and Z Reports) | ⏳ Pending   | -                       |
+| REQ-003 | Report Generation (X and Z Reports) | ✅ Completed | 1.0.1                   |
 | REQ-004 | Inventory Management Integration    | ⏳ Pending   | -                       |
 | REQ-005 | Security Enhancements               | ⏳ Pending   | -                       |
 | REQ-006 | User Interface Improvements         | ⏳ Pending   | -                       |
@@ -32,6 +32,15 @@ This document tracks the implementation progress of requirements for ZRA Smart I
 - ✅ Updated ZraService to incorporate tax calculations in sales, purchase and stock data methods
 - ✅ Enhanced ConfigForm UI with tax category selection and display of tax details
 - ✅ Added tax calculation endpoints to the controller
+
+## REQ-003: Report Generation (X and Z Reports)
+
+- ✅ Created `src/Console/Commands/ZraReportCommand.php` for generating reports via CLI
+- ✅ Implemented `src/Services/ZraReportService.php` for report generation logic
+- ✅ Added methods to ZraService for generating different types of reports (X, Z, daily, monthly)
+- ✅ Enhanced DashboardWidget UI to allow users to generate reports
+- ✅ Added API endpoint for report generation
+- ✅ Implemented report export in various formats (JSON, text)
 
 ---
 

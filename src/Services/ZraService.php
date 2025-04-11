@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Mak8Tech\ZraSmartInvoice\Models\ZraConfig;
 use Mak8Tech\ZraSmartInvoice\Models\ZraTransactionLog;
 use Mak8Tech\ZraSmartInvoice\Services\ZraTaxService;
+use Mak8Tech\ZraSmartInvoice\Services\ZraReportService;
 
 class ZraService
 {
@@ -653,5 +654,69 @@ class ZraService
     public function isExempt(string $taxCategory): bool
     {
         return $this->taxService->isExempt($taxCategory);
+    }
+
+    /**
+     * Generate a report
+     *
+     * @param string $type Type of report (x, z, daily, monthly)
+     * @param \Illuminate\Support\Carbon|null $date Date for the report (defaults to today)
+     * @return array
+     * @throws Exception
+     */
+    public function generateReport(string $type, ?\Illuminate\Support\Carbon $date = null): array
+    {
+        $this->ensureInitialized();
+
+        // Use the ZraReportService to generate the report
+        $reportService = app(ZraReportService::class);
+        return $reportService->generateReport($type, $date ?? now());
+    }
+
+    /**
+     * Generate an X report (interim report for current day)
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function generateXReport(): array
+    {
+        return $this->generateReport('x');
+    }
+
+    /**
+     * Generate a Z report (finalized report for a day)
+     *
+     * @param \Illuminate\Support\Carbon|null $date
+     * @return array
+     * @throws Exception
+     */
+    public function generateZReport(?\Illuminate\Support\Carbon $date = null): array
+    {
+        return $this->generateReport('z', $date);
+    }
+
+    /**
+     * Generate a daily report
+     *
+     * @param \Illuminate\Support\Carbon|null $date
+     * @return array
+     * @throws Exception
+     */
+    public function generateDailyReport(?\Illuminate\Support\Carbon $date = null): array
+    {
+        return $this->generateReport('daily', $date);
+    }
+
+    /**
+     * Generate a monthly report
+     *
+     * @param \Illuminate\Support\Carbon|null $date
+     * @return array
+     * @throws Exception
+     */
+    public function generateMonthlyReport(?\Illuminate\Support\Carbon $date = null): array
+    {
+        return $this->generateReport('monthly', $date);
     }
 }

@@ -20,12 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated controller to pass invoice and transaction type parameters
 
 - **Comprehensive Tax Handling (REQ-002)**:
+
   - Added ZraTaxService for tax calculations based on different tax categories
   - Implemented support for multiple tax categories (VAT, Tourism Levy, Excise Duty)
   - Added zero-rated and exempt transaction handling
   - Updated UI to include tax category selection
   - Added tax calculation API endpoints
   - Implemented tax summary display in test results
+
+- **Report Generation (X and Z Reports) (REQ-003)**:
+  - Added ZraReportCommand for generating reports via CLI
+  - Created ZraReportService for generating X, Z, daily, and monthly reports
+  - Enhanced DashboardWidget with report generation UI
+  - Added report generation API endpoint
+  - Implemented report export in various formats (JSON, text)
+  - Added support for saving reports to disk
 
 ## [1.0.0] - 2025-03-15
 

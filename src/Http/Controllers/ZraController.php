@@ -350,4 +350,79 @@ class ZraController extends Controller
             ];
         }
     }
+
+    /**
+     * Generate a report
+     *
+     * @param Request $request
+     * @return array|\Illuminate\Http\Response
+     */
+    public function generateReport(Request $request)
+    {
+        try {
+            // Ensure device is initialized
+            if (!$this->zraService->isInitialized()) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not initialized. Please initialize the device first.',
+                ];
+            }
+
+            $type = $request->input('type', 'daily');
+            $date = $request->input('date') ? \Carbon\Carbon::parse($request->input('date')) : now();
+            $format = $request->input('format', 'json');
+            $download = $request->boolean('download', false);
+
+            // Validate report type
+            if (!in_array($type, ['x', 'z', 'daily', 'monthly'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid report type. Must be one of: x, z, daily, monthly',
+                ];
+            }
+
+            // Generate the report
+            $report = $this->zraService->generateReport($type, $date);
+
+            // Handle download request
+            if ($download) {
+                $filename = $date->format('Y-m-d') . '_' . $type . '_report';
+
+                if ($format === 'json') {
+                    return response()->json($report)
+                        ->header('Content-Disposition', 'attachment; filename="' . $filename . '.json"');
+                } else if ($format === 'csv') {
+                    // CSV format implementation would go here
+                    return [
+                        'success' => false,
+                        'message' => 'CSV format not supported yet',
+                    ];
+                } else if ($format === 'pdf') {
+                    // PDF format implementation would go here
+                    return [
+                        'success' => false,
+                        'message' => 'PDF format not supported yet',
+                    ];
+                }
+            }
+
+            // Return the report data
+            return [
+                'success' => true,
+                'type' => $type,
+                'date' => $date->format('Y-m-d'),
+                'report' => $report,
+            ];
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('ZRA report generation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
 }

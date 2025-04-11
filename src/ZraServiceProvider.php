@@ -4,7 +4,10 @@ namespace Mak8Tech\ZraSmartInvoice;
 
 use Illuminate\Support\ServiceProvider;
 use Mak8Tech\ZraSmartInvoice\Console\Commands\ZraHealthCheckCommand;
+use Mak8Tech\ZraSmartInvoice\Console\Commands\ZraReportCommand;
+use Mak8Tech\ZraSmartInvoice\Services\ZraReportService;
 use Mak8Tech\ZraSmartInvoice\Services\ZraService;
+use Mak8Tech\ZraSmartInvoice\Services\ZraTaxService;
 
 class ZraServiceProvider extends ServiceProvider
 {
@@ -28,11 +31,12 @@ class ZraServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/js' => resource_path('js/vendor/mak8tech/zra-smart-invoice'),
         ], 'inertia-components');
-        
+
         // Register commands
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ZraHealthCheckCommand::class,
+                ZraReportCommand::class,
             ]);
         }
     }
@@ -51,6 +55,19 @@ class ZraServiceProvider extends ServiceProvider
         // Register the service
         $this->app->singleton('zra', function ($app) {
             return new ZraService();
+        });
+
+        // Register the tax service
+        $this->app->singleton(ZraTaxService::class, function ($app) {
+            return new ZraTaxService();
+        });
+
+        // Register the report service
+        $this->app->singleton(ZraReportService::class, function ($app) {
+            return new ZraReportService(
+                $app->make(ZraService::class),
+                $app->make(ZraTaxService::class)
+            );
         });
     }
 }

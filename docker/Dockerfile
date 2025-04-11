@@ -44,7 +44,7 @@ USER www
 
 # Setup Node.js and npm
 USER root
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 RUN npm install -g npm
 
