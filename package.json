@@ -1,6 +1,6 @@
 {
   "name": "zra-smart-invoice",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ZRA Smart Invoice Integration Package for Laravel",
   "private": true,
   "type": "module",
